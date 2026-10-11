@@ -1,14 +1,5 @@
-pub fn add(left: u64, right: u64) -> u64 {
-    left + right
-}
+pub mod mem_info;
+pub mod mem_metrics;
+pub use mem_info::{MemInfoError, get_mem_info};
+pub use mem_metrics::parse_metrics;
 
-#[cfg(test)]
-mod tests {
-    use super::*;
-
-    #[test]
-    fn it_works() {
-        let result = add(2, 2);
-        assert_eq!(result, 4);
-    }
-}

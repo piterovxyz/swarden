@@ -1,6 +1,18 @@
+[workspace]
+members = [
+    ".",
+    "crates/*",
+]
+
+[workspace.dependencies]
+swarden-agent = { path = "crates/swarden-agent" }
+swarden-core = { path = "crates/swarden-core" }
+
 [package]
 name = "swarden"
 version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+swarden-agent = { workspace = true }
+swarden-core = { workspace = true }
