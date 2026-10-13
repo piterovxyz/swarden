@@ -5,15 +5,3 @@ version = 4
 [[package]]
 name = "swarden"
 version = "0.1.0"
-dependencies = [
- "swarden-agent",
- "swarden-core",
-]
-
-[[package]]
-name = "swarden-agent"
-version = "0.1.0"
-
-[[package]]
-name = "swarden-core"
-version = "0.1.0"
