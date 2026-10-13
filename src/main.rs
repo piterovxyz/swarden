@@ -27,8 +27,7 @@ fn main() -> io::Result<()> {
                 (metrics.mem.total - metrics.mem.available) as f64
                     / (metrics.mem.total as f64 / 100.0)
             );
-            println!("CPU Total: {}", metrics.cpu.total);
-            println!("CPU Idle: {}", metrics.cpu.idle);
+            println!("CPU Usage: {:.1}%", metrics.cpu.usage_percent);
         }
 
         thread::sleep(Duration::from_millis(200));
