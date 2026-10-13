@@ -50,8 +50,8 @@ impl MetricsCollector {
         let tick = stat.parse::<CpuTicks>()?;
 
         let cpu_usage = if let Some(ptick) = self.prev_tick {
-            let delta_total = tick.total - ptick.total;
-            let delta_idle = tick.idle - ptick.idle;
+            let delta_total = tick.total.saturating_sub(ptick.total);
+            let delta_idle = tick.idle.saturating_sub(ptick.idle);
 
             if delta_total > 0 {
                 (delta_total - delta_idle) as f64 / delta_total as f64 * 100.0
