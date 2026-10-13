@@ -1,9 +1,10 @@
-use std::{io, io::Write, thread, time::Duration};
+use std::{io, thread, time::Duration};
 
 mod metrics;
+mod terminal;
 
 fn main() -> io::Result<()> {
-    clear_terminal()?;
+    terminal::clear()?;
     let mut collector = metrics::MetricsCollector::new();
     loop {
         if let Ok(metrics) = collector.collect() {
@@ -13,13 +14,6 @@ fn main() -> io::Result<()> {
         }
 
         thread::sleep(Duration::from_secs(2));
-        clear_terminal()?;
+        terminal::clear()?;
     }
-}
-
-fn clear_terminal() -> io::Result<()> {
-    let stdout = io::stdout();
-    let mut handle = stdout.lock();
-    handle.write_all(b"\x1B[2J\x1B[1;1H")?;
-    handle.flush()
 }
