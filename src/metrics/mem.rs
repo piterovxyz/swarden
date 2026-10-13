@@ -9,9 +9,8 @@ use crate::metrics::mem::MemInfoError::{Io, ParseError, Utf8};
 
 #[derive(Debug, Default)]
 pub struct MemoryMetrics {
-    pub total_mb: u64,
-    pub available_mb: u64,
-    pub used_percent: f64,
+    pub total: u64,
+    pub available: u64,
 }
 
 pub enum MemInfoError {
@@ -77,9 +76,8 @@ fn parse_mem(content: &str) -> Option<MemoryMetrics> {
 
     if total_kb > 0 && available_kb > 0 {
         Some(MemoryMetrics {
-            total_mb: total_kb / 1024,
-            available_mb: available_kb / 1024,
-            used_percent: (total_kb - available_kb) as f64 / (total_kb as f64 / 100.0),
+            total: total_kb,
+            available: available_kb,
         })
     } else {
         None
