@@ -8,6 +8,7 @@ fn main() -> io::Result<()> {
     let mut collector = metrics::MetricsCollector::new();
     loop {
         if let Ok(metrics) = collector.collect() {
+            terminal::clear()?;
             println!(
                 "Available RAM: {:.1} GB",
                 metrics.mem.available as f64 / 1024.0 / 1024.0
@@ -29,6 +30,5 @@ fn main() -> io::Result<()> {
         }
 
         thread::sleep(Duration::from_millis(200));
-        terminal::clear()?;
     }
 }
