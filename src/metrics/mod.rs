@@ -17,6 +17,15 @@ pub struct SystemMetrics {
     pub cpu: CpuMetrics,
 }
 
+impl From<SystemMetrics> for String {
+    fn from(value: SystemMetrics) -> Self {
+        format!(
+            "CPU: {:.1}%\nMem Total: {} KB\nMem Available: {} KB",
+            value.cpu.usage_percent, value.mem.total, value.mem.available
+        )
+    }
+}
+
 #[derive(Error, Debug)]
 pub enum MetricsError {
     #[error("i/o error: {0}")]
