@@ -12,6 +12,7 @@ use thiserror::Error;
 use cpu::{CpuMetrics, CpuTicks};
 use mem::MemoryMetrics;
 
+#[derive(Debug, Clone, Copy)]
 pub struct SystemMetrics {
     pub mem: MemoryMetrics,
     pub cpu: CpuMetrics,

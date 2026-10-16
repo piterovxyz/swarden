@@ -1,13 +1,43 @@
-use metrics::SystemMetrics;
-use tokio::sync::mpsc;
-use tokio::time::{Duration, sleep};
-
 mod metrics;
-mod terminal;
+mod server;
+
+use std::sync::Arc;
+use std::time::Duration;
+
+use axum::Router;
+use axum::routing::get;
+use tokio::sync::{RwLock, mpsc};
+use tokio::time::sleep;
+
+use crate::metrics::SystemMetrics;
+use crate::server::metrics::get_metrics;
+use crate::server::state::AppState;
 
 #[tokio::main]
 async fn main() {
     let (metrics_tx, mut metrics_rx) = mpsc::channel::<SystemMetrics>(32);
+
+    let shared_metrics = Arc::new(RwLock::new(None));
+    let state = AppState {
+        metrics: shared_metrics.clone(),
+    };
+
+    tokio::spawn(async move {
+        let app = Router::new()
+            .route("/metrics", get(get_metrics))
+            .with_state(state);
+
+        match tokio::net::TcpListener::bind("127.0.0.1:8080").await {
+            Ok(listener) => {
+                if let Err(e) = axum::serve(listener, app).await {
+                    eprintln!("error serve: {}", e);
+                }
+            }
+            Err(e) => {
+                eprintln!("error bind listener: {}", e);
+            }
+        }
+    });
 
     tokio::spawn(async move {
         let mut collector = metrics::MetricsCollector::new();
@@ -21,27 +51,10 @@ async fn main() {
         }
     });
 
-    while let Some(metrics) = metrics_rx.recv().await {
-        if let Err(e) = terminal::clear() {
-            eprintln!("error clear terminal: {}", e);
+    tokio::spawn(async move {
+        while let Some(metrics) = metrics_rx.recv().await {
+            let mut lock = shared_metrics.write().await;
+            *lock = Some(metrics);
         }
-        println!(
-            "Available RAM: {:.1} GB",
-            metrics.mem.available as f64 / 1024.0 / 1024.0
-        );
-        println!(
-            "Total RAM: {:.1} GB",
-            metrics.mem.total as f64 / 1024.0 / 1024.0
-        );
-        println!(
-            "Used RAM: {:.1} GB",
-            (metrics.mem.total as f64 / 1024.0 / 1024.0)
-                - (metrics.mem.available as f64 / 1024.0 / 1024.0)
-        );
-        println!(
-            "RAM Usage: {:.1}%",
-            (metrics.mem.total - metrics.mem.available) as f64 / (metrics.mem.total as f64 / 100.0)
-        );
-        println!("CPU Usage: {:.1}%", metrics.cpu.usage_percent);
-    }
+    });
 }

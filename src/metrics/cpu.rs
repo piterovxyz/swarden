@@ -27,6 +27,7 @@ impl std::str::FromStr for CpuTicks {
     }
 }
 
+#[derive(Debug, Clone, Copy)]
 pub struct CpuMetrics {
     pub usage_percent: f64,
 }

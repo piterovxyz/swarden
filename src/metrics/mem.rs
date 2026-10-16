@@ -1,5 +1,6 @@
 use super::MetricsError;
 
+#[derive(Debug, Clone, Copy)]
 pub struct MemoryMetrics {
     pub total: u64,
     pub available: u64,
