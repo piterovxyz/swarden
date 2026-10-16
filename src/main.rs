@@ -1,4 +1,5 @@
-use crate::metrics::SystemMetrics;
+use metrics::SystemMetrics;
+use tokio::sync::mpsc;
 use tokio::time::{Duration, sleep};
 
 mod metrics;
@@ -6,13 +7,13 @@ mod terminal;
 
 #[tokio::main]
 async fn main() {
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<SystemMetrics>(32);
+    let (metrics_tx, mut metrics_rx) = mpsc::channel::<SystemMetrics>(32);
 
     tokio::spawn(async move {
         let mut collector = metrics::MetricsCollector::new();
         loop {
             if let Ok(metrics) = collector.collect()
-                && tx.send(metrics).await.is_err()
+                && metrics_tx.send(metrics).await.is_err()
             {
                 break;
             }
@@ -20,7 +21,7 @@ async fn main() {
         }
     });
 
-    while let Some(metrics) = rx.recv().await {
+    while let Some(metrics) = metrics_rx.recv().await {
         if let Err(e) = terminal::clear() {
             eprintln!("error clear terminal: {}", e);
         }
