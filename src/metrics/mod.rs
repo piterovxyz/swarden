@@ -7,24 +7,16 @@ use std::{
     str::Utf8Error,
 };
 
+use serde::Serialize;
 use thiserror::Error;
 
 use cpu::{CpuMetrics, CpuTicks};
 use mem::MemoryMetrics;
 
-#[derive(Debug, Clone, Copy)]
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct SystemMetrics {
     pub mem: MemoryMetrics,
     pub cpu: CpuMetrics,
-}
-
-impl From<SystemMetrics> for String {
-    fn from(value: SystemMetrics) -> Self {
-        format!(
-            "CPU: {:.1}%\nMem Total: {} KB\nMem Available: {} KB",
-            value.cpu.usage_percent, value.mem.total, value.mem.available
-        )
-    }
 }
 
 #[derive(Error, Debug)]

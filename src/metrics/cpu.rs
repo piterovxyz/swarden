@@ -1,6 +1,13 @@
 use super::MetricsError;
 
-#[derive(Debug, Clone, Copy)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, Serialize)]
+pub struct CpuMetrics {
+    pub usage_percent: f64,
+}
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct CpuTicks {
     pub total: u64,
     pub idle: u64,
@@ -25,9 +32,4 @@ impl std::str::FromStr for CpuTicks {
         }
         Ok(ticks)
     }
-}
-
-#[derive(Debug, Clone, Copy)]
-pub struct CpuMetrics {
-    pub usage_percent: f64,
 }

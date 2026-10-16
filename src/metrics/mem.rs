@@ -1,6 +1,8 @@
 use super::MetricsError;
 
-#[derive(Debug, Clone, Copy)]
+use serde::Serialize;
+
+#[derive(Debug, Clone, Copy, Serialize)]
 pub struct MemoryMetrics {
     pub total: u64,
     pub available: u64,
