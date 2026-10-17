@@ -1,39 +1,41 @@
 mod metrics;
 mod server;
 
-use std::sync::Arc;
 use std::time::Duration;
 
 use axum::Router;
 use axum::routing::get;
-use tokio::sync::RwLock;
+use tokio::net::TcpListener;
+use tokio::sync::broadcast;
 use tokio::time::sleep;
 
-use crate::server::metrics::get_metrics;
+use crate::metrics::{MetricsCollector, SystemMetrics};
+use crate::server::metrics::sse_handler;
 use crate::server::state::AppState;
 
 #[tokio::main]
 async fn main() {
-    let shared_metrics = Arc::new(RwLock::new(None));
+    let (tx, _) = broadcast::channel::<SystemMetrics>(16);
+
     let state = AppState {
-        metrics: shared_metrics.clone(),
+        metrics: tx.clone(),
     };
 
     tokio::spawn(async move {
-        let mut collector = metrics::MetricsCollector::new();
+        let mut collector = MetricsCollector::new();
         loop {
             if let Ok(metrics) = collector.collect() {
-                *shared_metrics.write().await = Some(metrics);
+                let _ = tx.send(metrics);
             }
             sleep(Duration::from_millis(200)).await;
         }
     });
 
     let app = Router::new()
-        .route("/metrics", get(get_metrics))
+        .route("/metrics", get(sse_handler))
         .with_state(state);
 
-    match tokio::net::TcpListener::bind("127.0.0.1:8080").await {
+    match TcpListener::bind("127.0.0.1:8080").await {
         Ok(listener) => {
             if let Err(e) = axum::serve(listener, app).await {
                 eprintln!("error serve: {}", e);

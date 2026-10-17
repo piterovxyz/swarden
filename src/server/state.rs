@@ -1,10 +1,8 @@
-use std::sync::Arc;
-
-use tokio::sync::RwLock;
+use tokio::sync::broadcast;
 
 use crate::metrics::SystemMetrics;
 
 #[derive(Clone)]
 pub struct AppState {
-    pub metrics: Arc<RwLock<Option<SystemMetrics>>>,
+    pub metrics: broadcast::Sender<SystemMetrics>,
 }
