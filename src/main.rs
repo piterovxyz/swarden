@@ -8,6 +8,7 @@ use axum::routing::get;
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio::time::sleep;
+use tower_http::cors::CorsLayer;
 
 use crate::metrics::{MetricsCollector, SystemMetrics};
 use crate::server::metrics::sse_handler;
@@ -15,6 +16,7 @@ use crate::server::state::AppState;
 
 #[tokio::main]
 async fn main() {
+    let cors = CorsLayer::permissive();
     let (tx, _) = broadcast::channel::<SystemMetrics>(16);
 
     let state = AppState {
@@ -33,6 +35,7 @@ async fn main() {
 
     let app = Router::new()
         .route("/metrics", get(sse_handler))
+        .layer(cors)
         .with_state(state);
 
     match TcpListener::bind("127.0.0.1:8080").await {
