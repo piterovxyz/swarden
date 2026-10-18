@@ -14,3 +14,6 @@ thiserror = "^2.0"
 tokio = { version = "1.53.3", features = ["full"] }
 tokio-stream = { version = "0.1.19", features = ["sync"] }
 tower-http = { version = "0.7.1", features = ["cors"] }
+
+[profile.release]
+strip = true
