@@ -1,4 +1,4 @@
-.PHONY: all build frontend backend clean
+.PHONY: all build frontend backend clean watch
 
 BIN_NAME := swarden
 TARGET := target/release/$(BIN_NAME)
@@ -15,6 +15,12 @@ backend: frontend
 
 build: backend
 	@echo "build complete: $(TARGET)"
+
+dev:
+	@echo "...running dev mode..."
+		(trap 'kill 0' SIGINT; \
+		 cargo watch -i frontend -i target -x run & \
+		 cd frontend && bun run dev)
 
 clean:
 	@echo "...cleaning build artifacts..."

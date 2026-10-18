@@ -1,3 +1,4 @@
+mod config;
 mod metrics;
 mod server;
 
@@ -8,8 +9,11 @@ use axum::routing::get;
 use tokio::net::TcpListener;
 use tokio::sync::broadcast;
 use tokio::time::sleep;
+
+#[cfg(debug_assertions)]
 use tower_http::cors::CorsLayer;
 
+use crate::config::ServerConfig;
 use crate::metrics::{MetricsCollector, SystemMetrics};
 use crate::server::files::{index, static_file};
 use crate::server::metrics::sse_handler;
@@ -17,7 +21,7 @@ use crate::server::state::AppState;
 
 #[tokio::main]
 async fn main() {
-    let cors = CorsLayer::permissive();
+    let config = ServerConfig::from_env();
     let (tx, _) = broadcast::channel::<SystemMetrics>(16);
 
     let state = AppState {
@@ -37,12 +41,26 @@ async fn main() {
     let app = Router::new()
         .route("/", get(index))
         .route("/{*path}", get(static_file))
-        .route("/metrics", get(sse_handler))
-        .layer(cors)
-        .with_state(state);
+        .route("/metrics", get(sse_handler));
 
-    match TcpListener::bind("127.0.0.1:8080").await {
+    #[cfg(debug_assertions)]
+    let app = app.layer(CorsLayer::permissive());
+
+    let app = app.with_state(state);
+
+    let addr = match config.socket_addr() {
+        Ok(addr) => addr,
+        Err(e) => {
+            eprintln!("invalid listen addr: {}", e);
+            std::process::exit(1);
+        }
+    };
+
+    match TcpListener::bind(addr).await {
         Ok(listener) => {
+            let local_addr = listener.local_addr().expect("failed to get local address");
+            println!("swarden running on {local_addr}");
+
             if let Err(e) = axum::serve(listener, app).await {
                 eprintln!("error serve: {}", e);
             }

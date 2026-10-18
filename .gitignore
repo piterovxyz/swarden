@@ -7,3 +7,4 @@ rustc-ice-*.txt
 .idea/
 /target
 dump
+.env
