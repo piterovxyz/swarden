@@ -11,6 +11,7 @@ use tokio::time::sleep;
 use tower_http::cors::CorsLayer;
 
 use crate::metrics::{MetricsCollector, SystemMetrics};
+use crate::server::files::{index, static_file};
 use crate::server::metrics::sse_handler;
 use crate::server::state::AppState;
 
@@ -34,6 +35,8 @@ async fn main() {
     });
 
     let app = Router::new()
+        .route("/", get(index))
+        .route("/{*path}", get(static_file))
         .route("/metrics", get(sse_handler))
         .layer(cors)
         .with_state(state);
