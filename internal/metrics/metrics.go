@@ -2,6 +2,7 @@ package metrics
 
 import (
 	"errors"
+	"fmt"
 	"io"
 	"os"
 )
@@ -69,7 +70,7 @@ func NewCollector() MetricsCollector {
 func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return []byte{}, err
+		return []byte{}, fmt.Errorf("opening %s: %w", path, err)
 	}
 	defer file.Close()
 
@@ -82,7 +83,7 @@ func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return []byte{}, err
+			return []byte{}, fmt.Errorf("reading %s: %w", path, err)
 		}
 		if readBytes == len(buf) {
 			break

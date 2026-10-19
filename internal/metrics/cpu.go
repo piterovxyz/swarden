@@ -21,7 +21,7 @@ func ParseCpuTicks(s []byte) (CpuTicks, error) {
 	parts := strings.Fields(string(cpuStat))
 
 	if len(parts) < 6 || parts[0] != "cpu" {
-		return CpuTicks{}, errors.New("error parse /proc/stat")
+		return CpuTicks{}, errors.New("parsing /proc/stat: invalid format")
 	}
 
 	var ticks CpuTicks
@@ -29,7 +29,7 @@ func ParseCpuTicks(s []byte) (CpuTicks, error) {
 	for i := 1; i < len(parts); i++ {
 		val, err := strconv.ParseUint(parts[i], 10, 64)
 		if err != nil {
-			return CpuTicks{}, errors.New("error parse /proc/stat")
+			return CpuTicks{}, err
 		}
 
 		ticks.Total += val

@@ -47,6 +47,6 @@ func ParseMemMetrics(s []byte) (MemMetrics, error) {
 			Available: available,
 		}, nil
 	} else {
-		return MemMetrics{}, errors.New("error parsing /proc/meminfo")
+		return MemMetrics{}, errors.New("parsing /proc/meminfo: total or available is 0")
 	}
 }
