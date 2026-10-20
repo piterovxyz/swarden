@@ -1,0 +1,10 @@
+services:
+  swarden:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    environment:
+      PORT: ${PORT:-8080}
+    pid: host
+    read_only: true
+    restart: unless-stopped
