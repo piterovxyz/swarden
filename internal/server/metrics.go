@@ -21,18 +21,31 @@ func (h *Handler) MetricsHandler(w http.ResponseWriter, r *http.Request) {
 		case <-clientGone:
 			return
 		case metrics := <-metricsChan:
-			json, err := json.Marshal(metrics)
+			data, err := json.Marshal(metrics)
 			if err != nil {
 				log.Println("error marshalling metrics", err)
 				return
 			}
-			if _, err := w.Write(json); err != nil {
-				log.Println("error writing metrics", err)
+			if err := flushSseMetrics(w, data); err != nil {
+				log.Println("error flushing metrics", err)
 				return
-			}
-			if f, ok := w.(http.Flusher); ok {
-				f.Flush()
 			}
 		}
 	}
+}
+
+func flushSseMetrics(w http.ResponseWriter, data []byte) error {
+	if _, err := w.Write([]byte("data: ")); err != nil {
+		return err
+	}
+	if _, err := w.Write(data); err != nil {
+		return err
+	}
+	if _, err := w.Write([]byte("\n\n")); err != nil {
+		return err
+	}
+	if f, ok := w.(http.Flusher); ok {
+		f.Flush()
+	}
+	return nil
 }

@@ -36,11 +36,14 @@ func (b *Broadcast) Unsubscribe(ch chan metrics.SystemMetrics) {
 	}
 }
 
-func (b *Broadcast) Publish(metrics metrics.SystemMetrics) {
+func (b *Broadcast) Publish(m metrics.SystemMetrics) {
 	b.mu.RLock()
 	defer b.mu.RUnlock()
 
 	for ch := range b.subscribers {
-		ch <- metrics
+		select {
+		case ch <- m:
+		default:
+		}
 	}
 }

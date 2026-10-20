@@ -40,17 +40,12 @@ func (m *MetricsCollector) Collect() (SystemMetrics, error) {
 
 	var cpuUsage float64
 
-	if m.prevTick != (CpuTicks{}) {
+	if m.prevTick != (CpuTicks{}) && tick.Total > m.prevTick.Total && tick.Idle >= m.prevTick.Idle {
 		deltaTotal := float64(tick.Total - m.prevTick.Total)
 		deltaIdle := float64(tick.Idle - m.prevTick.Idle)
-
-		if deltaTotal > 0 {
+		if deltaTotal > deltaIdle {
 			cpuUsage = (deltaTotal - deltaIdle) / deltaTotal * 100
-		} else {
-			cpuUsage = 0
 		}
-	} else {
-		cpuUsage = 0
 	}
 
 	m.prevTick = tick
@@ -70,7 +65,7 @@ func NewCollector() MetricsCollector {
 func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 	file, err := os.Open(path)
 	if err != nil {
-		return []byte{}, fmt.Errorf("opening %s: %w", path, err)
+		return nil, fmt.Errorf("opening %s: %w", path, err)
 	}
 	defer file.Close()
 
@@ -83,7 +78,7 @@ func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 			if errors.Is(err, io.EOF) {
 				break
 			}
-			return []byte{}, fmt.Errorf("reading %s: %w", path, err)
+			return nil, fmt.Errorf("reading %s: %w", path, err)
 		}
 		if readBytes == len(buf) {
 			break
