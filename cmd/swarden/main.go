@@ -33,6 +33,11 @@ func main() {
 	http.HandleFunc("/metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
+
 	log.Println("server is running on :", port)
 
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
