@@ -19,5 +19,9 @@ export default defineConfig(({ mode }) => {
                 },
             },
         },
+        build: {
+            outDir: "../internal/server/dist",
+            emptyOutDir: true,
+        }
     };
 });

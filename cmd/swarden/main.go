@@ -23,6 +23,12 @@ func main() {
 		}
 	}()
 
+	static, err := server.GetAssets("/")
+	if err != nil {
+		log.Fatal("error get assets", err)
+	}
+	http.Handle("/", http.FileServerFS(static))
+
 	http.HandleFunc("/metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	log.Println("server is running on port 8080")
