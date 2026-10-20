@@ -17,7 +17,7 @@ func main() {
 		for {
 			metrics, err := collector.Collect()
 			if err != nil {
-				log.Fatal("error get metrics", err)
+				log.Println("error collecting metrics: ", err)
 			}
 			broadcast.Publish(metrics)
 			time.Sleep(time.Millisecond * 200)
@@ -28,9 +28,10 @@ func main() {
 	if err != nil {
 		log.Fatal("error get assets", err)
 	}
-	http.Handle("/", http.FileServerFS(static))
 
-	http.HandleFunc("/metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
+	mux := http.NewServeMux()
+	mux.Handle("GET /", http.FileServerFS(static))
+	mux.HandleFunc("GET /metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	port := os.Getenv("PORT")
 
@@ -40,7 +41,7 @@ func main() {
 
 	log.Println("server is running on :", port)
 
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err.Error())
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
+		log.Fatal(err)
 	}
 }
