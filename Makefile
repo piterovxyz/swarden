@@ -1,7 +1,11 @@
-.PHONY: all build frontend backend clean watch
+.PHONY: all build frontend backend clean dev run
 
 BIN_NAME := swarden
-TARGET := target/release/$(BIN_NAME)
+BIN_DIR := bin
+DIST_DIR := internal/server/dist
+TARGET := $(BIN_DIR)/$(BIN_NAME)
+MAIN := ./cmd/swarden
+GO ?= go
 
 all: build
 
@@ -11,18 +15,23 @@ frontend:
 
 backend: frontend
 	@echo "...build backend..."
-	cargo build --release
+	@mkdir -p $(BIN_DIR)
+	$(GO) build -trimpath -o $(TARGET) $(MAIN)
 
 build: backend
 	@echo "build complete: $(TARGET)"
 
+run: build
+	./$(TARGET)
+
 dev:
 	@echo "...running dev mode..."
-		(trap 'kill 0' SIGINT; \
-		 cargo watch -i frontend -i target -x run & \
-		 cd frontend && bun run dev)
+	@test -d $(DIST_DIR) || $(MAKE) frontend
+	(trap 'kill 0' SIGINT SIGTERM; \
+		$(GO) run $(MAIN) & \
+		cd frontend && bun run dev)
 
 clean:
 	@echo "...cleaning build artifacts..."
-	cargo clean
-	rm -rf frontend/dist
+	rm -rf $(BIN_DIR) $(DIST_DIR)
+	$(GO) clean
