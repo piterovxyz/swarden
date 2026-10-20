@@ -8,6 +8,6 @@ import (
 //go:embed dist/*
 var dist embed.FS
 
-func GetAssets(path string) (fs.FS, error) {
+func GetAssets() (fs.FS, error) {
 	return fs.Sub(dist, "dist")
 }

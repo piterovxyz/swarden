@@ -24,7 +24,7 @@ func main() {
 		}
 	}()
 
-	static, err := server.GetAssets("/")
+	static, err := server.GetAssets()
 	if err != nil {
 		log.Fatal("error get assets", err)
 	}
