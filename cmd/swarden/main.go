@@ -3,6 +3,7 @@ package main
 import (
 	"log"
 	"net/http"
+	"os"
 	"swarden/internal/metrics"
 	"swarden/internal/server"
 	"time"
@@ -31,8 +32,10 @@ func main() {
 
 	http.HandleFunc("/metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
-	log.Println("server is running on port 8080")
-	if err := http.ListenAndServe(":8080", nil); err != nil {
+	port := os.Getenv("PORT")
+	log.Println("server is running on :", port)
+
+	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatal(err.Error())
 	}
 }
