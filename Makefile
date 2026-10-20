@@ -16,7 +16,7 @@ frontend:
 backend: frontend
 	@echo "...build backend..."
 	@mkdir -p $(BIN_DIR)
-	$(GO) build -trimpath -o $(TARGET) $(MAIN)
+	$(GO) build -ldflags="-s -w" -trimpath -o $(TARGET) $(MAIN)
 
 build: backend
 	@echo "build complete: $(TARGET)"
