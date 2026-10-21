@@ -17,25 +17,25 @@ func main() {
 		for {
 			metrics, err := collector.Collect()
 			if err != nil {
-				log.Fatal("error get metrics", err)
+				log.Println("error collecting metrics: ", err)
 			}
 			broadcast.Publish(metrics)
 			time.Sleep(time.Millisecond * 200)
 		}
 	}()
 
-	static, err := server.GetAssets("/")
-	if err != nil {
-		log.Fatal("error get assets", err)
-	}
-	http.Handle("/", http.FileServerFS(static))
-
-	http.HandleFunc("/metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
+	mux := http.NewServeMux()
+	mux.HandleFunc("GET /metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	port := os.Getenv("PORT")
+
+	if port == "" {
+		port = "8080"
+	}
+
 	log.Println("server is running on :", port)
 
-	if err := http.ListenAndServe(":"+port, nil); err != nil {
-		log.Fatal(err.Error())
+	if err := http.ListenAndServe(":"+port, mux); err != nil {
+		log.Fatal(err)
 	}
 }
