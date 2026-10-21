@@ -24,13 +24,7 @@ func main() {
 		}
 	}()
 
-	static, err := server.GetAssets()
-	if err != nil {
-		log.Fatal("error get assets", err)
-	}
-
 	mux := http.NewServeMux()
-	mux.Handle("GET /", http.FileServerFS(static))
 	mux.HandleFunc("GET /metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	port := os.Getenv("PORT")
