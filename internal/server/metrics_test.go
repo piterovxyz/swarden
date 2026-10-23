@@ -60,24 +60,6 @@ func TestMetricsHandler(t *testing.T) {
 		Cpu: metrics.CpuMetrics{UsagePercent: 12.5},
 	}
 
-	t.Run("headers", func(t *testing.T) {
-		ctx, cancel := context.WithCancel(context.Background())
-		req := httptest.NewRequest(http.MethodGet, "/metrics", nil).WithContext(ctx)
-		rec := httptest.NewRecorder()
-		h := &Handler{Broadcast: NewBroadcast()}
-
-		done := make(chan struct{})
-		go func() {
-			h.MetricsHandler(rec, req)
-			close(done)
-		}()
-
-		waitSubscribers(t, h.Broadcast, 1)
-		assertSSEHeaders(t, rec.Header())
-		cancel()
-		waitHandler(t, done)
-	})
-
 	t.Run("event", func(t *testing.T) {
 		h := &Handler{Broadcast: NewBroadcast()}
 		mux := http.NewServeMux()

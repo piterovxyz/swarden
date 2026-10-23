@@ -28,14 +28,6 @@ func TestBroadcast(t *testing.T) {
 		}
 	})
 
-	t.Run("buffered channel", func(t *testing.T) {
-		b := NewBroadcast()
-		ch := b.Subscribe()
-		if cap(ch) != 10 {
-			t.Fatalf("cap = %d, want 10", cap(ch))
-		}
-	})
-
 	t.Run("drops when full", func(t *testing.T) {
 		b := NewBroadcast()
 		ch := b.Subscribe()

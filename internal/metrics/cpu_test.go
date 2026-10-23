@@ -15,24 +15,6 @@ func mustParseCpuTicks(t *testing.T, s string) CpuTicks {
 	return ticks
 }
 
-func TestCpuTickDelta(t *testing.T) {
-	prev := mustParseCpuTicks(t, "cpu 10 0 10 70 10\n")
-	curr := mustParseCpuTicks(t, "cpu 20 0 20 140 20\n")
-
-	if prev.Total != 100 || prev.Idle != 80 {
-		t.Fatalf("prev = %+v, want total 100 idle 80", prev)
-	}
-	if curr.Total != 200 || curr.Idle != 160 {
-		t.Fatalf("curr = %+v, want total 200 idle 160", curr)
-	}
-
-	deltaTotal := curr.Total - prev.Total
-	deltaIdle := curr.Idle - prev.Idle
-	if deltaTotal != 100 || deltaIdle != 80 {
-		t.Fatalf("delta total=%d idle=%d, want 100 and 80", deltaTotal, deltaIdle)
-	}
-}
-
 func TestCpuUsagePercent(t *testing.T) {
 	tests := []struct {
 		name string

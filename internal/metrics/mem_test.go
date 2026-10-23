@@ -74,8 +74,15 @@ func TestParseMemMetrics(t *testing.T) {
 		}
 	})
 
-	t.Run("non numeric field", func(t *testing.T) {
+	t.Run("non numeric total", func(t *testing.T) {
 		_, err := ParseMemMetrics([]byte("MemTotal: x kB\n"))
+		if _, ok := errors.AsType[*strconv.NumError](err); !ok {
+			t.Fatalf("error = %v, want a number parse error", err)
+		}
+	})
+
+	t.Run("non numeric available", func(t *testing.T) {
+		_, err := ParseMemMetrics([]byte("MemTotal: 16384 kB\nMemAvailable: x kB\n"))
 		if _, ok := errors.AsType[*strconv.NumError](err); !ok {
 			t.Fatalf("error = %v, want a number parse error", err)
 		}
