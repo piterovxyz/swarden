@@ -16,3 +16,7 @@ debug
 *.pdb
 internal/server/dist/
 bin/
+node_modules/
+dist/
+.env
+.DS_Store

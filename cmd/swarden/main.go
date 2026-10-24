@@ -25,6 +25,7 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
+	mux.Handle("GET /", server.UIHandler())
 	mux.HandleFunc("GET /metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	port := os.Getenv("PORT")
