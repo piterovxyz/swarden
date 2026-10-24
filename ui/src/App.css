@@ -1,0 +1,228 @@
+:root {
+    color-scheme: dark;
+    --bg-page: #121212;
+    --text-primary: #eceff1;
+    --text-secondary: #9aa3ab;
+    --text-muted: #6f7a84;
+    --border: #2a2a2a;
+    --surface: #1a1a1a;
+    --surface-raised: #222222;
+    --gauge-track: #333333;
+    --cpu-fill: #5a9a86;
+    --memory-fill: #7d88b3;
+    --notice-error-bg: rgb(187 128 83 / 12%);
+    --notice-error-fg: #d4a574;
+    --loader-track: #2e3533;
+    --loader-active: #5a9a86;
+}
+
+* {
+    box-sizing: border-box;
+}
+html {
+    min-width: 320px;
+    background: var(--bg-page);
+    scroll-behavior: smooth;
+}
+body {
+    margin: 0;
+    color: var(--text-primary);
+    font-family:
+        Inter,
+        ui-sans-serif,
+        system-ui,
+        -apple-system,
+        BlinkMacSystemFont,
+        "Segoe UI",
+        sans-serif;
+    font-size: 14px;
+    -webkit-font-smoothing: antialiased;
+}
+
+.main-content {
+    min-height: 100vh;
+    background: var(--bg-page);
+}
+
+.page-content {
+    display: flex;
+    flex-direction: column;
+    gap: 24px;
+    width: min(100%, 720px);
+    margin: 0 auto;
+    padding: 32px 24px 48px;
+}
+
+.page-heading {
+    margin: 0;
+}
+
+.brand {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    color: var(--text-primary);
+    font-size: 18px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+}
+.brand-mark {
+    display: grid;
+    width: 28px;
+    height: 28px;
+    place-items: center;
+    border-radius: 8px;
+    background: #3d7a6c;
+    color: white;
+    font-size: 16px;
+    font-weight: 700;
+    user-select: none;
+}
+
+.notice {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 0;
+    border: 1px solid var(--border);
+    border-radius: 9px;
+    background: var(--surface);
+    padding: 12px 16px;
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 500;
+}
+.notice-symbol {
+    display: grid;
+    width: 22px;
+    height: 22px;
+    flex: 0 0 auto;
+    place-items: center;
+    border-radius: 50%;
+    background: var(--notice-error-bg);
+    color: var(--notice-error-fg);
+    font-size: 12px;
+    font-weight: 700;
+}
+.loader {
+    width: 14px;
+    height: 14px;
+    flex: 0 0 auto;
+    border: 2px solid var(--loader-track);
+    border-top-color: var(--loader-active);
+    border-radius: 50%;
+    animation: spin 0.8s linear infinite;
+}
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.metrics-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 16px 40px;
+}
+.metric-label {
+    color: var(--text-secondary);
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: -0.1px;
+    line-height: 1;
+}
+
+.gauge {
+    display: flex;
+    flex: 0 0 210px;
+    flex-direction: column;
+    align-items: center;
+    width: 210px;
+    max-width: 100%;
+}
+.gauge-shell {
+    position: relative;
+    width: 100%;
+    line-height: 0;
+}
+.gauge-svg {
+    display: block;
+    width: 100%;
+    height: auto;
+    aspect-ratio: 200 / 168;
+}
+.gauge-track,
+.gauge-fill {
+    fill: none;
+    stroke-width: 12;
+    stroke-linecap: round;
+}
+.gauge-track {
+    stroke: var(--gauge-track);
+}
+.gauge-fill {
+    transition: stroke-dasharray 0.35s ease;
+}
+.gauge-fill-cpu {
+    stroke: var(--cpu-fill);
+}
+.gauge-fill-memory {
+    stroke: var(--memory-fill);
+}
+.gauge-inner {
+    position: absolute;
+    top: 52%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    transform: translate(-50%, -50%);
+    text-align: center;
+    line-height: normal;
+    pointer-events: none;
+}
+.gauge-label {
+    white-space: nowrap;
+}
+.gauge-percent {
+    color: var(--text-primary);
+    font-size: 26px;
+    font-weight: 700;
+    letter-spacing: -1.2px;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+}
+.gauge-percent-suffix {
+    margin-left: 1px;
+    color: var(--text-muted);
+    font-size: 14px;
+    font-weight: 500;
+    letter-spacing: -0.2px;
+}
+
+@media (max-width: 600px) {
+    .page-content {
+        gap: 20px;
+        padding: 24px 16px 32px;
+    }
+    .metrics-row {
+        gap: 12px 24px;
+    }
+    .gauge-percent {
+        font-size: 26px;
+    }
+}
+@media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+        scroll-behavior: auto !important;
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+    }
+}
