@@ -6,6 +6,8 @@ import (
 	"net/http"
 )
 
+//go:generate sh -c "cd ../../ui && bun i && bun run build"
+
 //go:embed all:dist
 var assets embed.FS
 
