@@ -14,8 +14,7 @@ go.work.sum
 dump
 debug
 *.pdb
-internal/server/dist/*
-!internal/server/dist/.gitkeep
+internal/server/dist
 bin/
 node_modules/
 dist/
