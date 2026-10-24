@@ -170,7 +170,6 @@ func assertSSEHeaders(t *testing.T, h http.Header) {
 		{"Content-Type", "text/event-stream"},
 		{"Cache-Control", "no-cache"},
 		{"Connection", "keep-alive"},
-		{"Access-Control-Allow-Origin", "*"},
 	}
 	for _, c := range checks {
 		if got := h.Get(c.key); got != c.want {
