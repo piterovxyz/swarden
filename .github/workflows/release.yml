@@ -26,20 +26,29 @@ jobs:
           bun i
           bun run build
 
-      - name: Setup Go
-        uses: actions/setup-go@v5
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
         with:
-          go-version-file: go.mod
-          cache: true
+          targets: x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu
+
+      - name: Cache Cargo
+        uses: Swatinem/rust-cache@v2
+
+      - name: Install ARM64 linker
+        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
       - name: Run tests
-        run: go test -v -race ./...
+        run: cargo test --locked
 
       - name: Build release binaries
+        env:
+          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: |
           mkdir -p release
-          GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o release/swarden-linux-amd64 ./cmd/swarden
-          GOOS=linux GOARCH=arm64 CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o release/swarden-linux-arm64 ./cmd/swarden
+          cargo build --locked --release --target x86_64-unknown-linux-gnu
+          cargo build --locked --release --target aarch64-unknown-linux-gnu
+          cp target/x86_64-unknown-linux-gnu/release/swarden release/swarden-linux-amd64
+          cp target/aarch64-unknown-linux-gnu/release/swarden release/swarden-linux-arm64
           cd release && sha256sum swarden-linux-* > checksums.txt
 
       - name: Create GitHub Release
