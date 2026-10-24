@@ -38,15 +38,7 @@ func (m *MetricsCollector) Collect() (SystemMetrics, error) {
 		return SystemMetrics{}, err
 	}
 
-	var cpuUsage float64
-
-	if m.prevTick != (CpuTicks{}) && tick.Total > m.prevTick.Total && tick.Idle >= m.prevTick.Idle {
-		deltaTotal := float64(tick.Total - m.prevTick.Total)
-		deltaIdle := float64(tick.Idle - m.prevTick.Idle)
-		if deltaTotal > deltaIdle {
-			cpuUsage = (deltaTotal - deltaIdle) / deltaTotal * 100
-		}
-	}
+	cpuUsage := cpuUsagePercent(m.prevTick, tick)
 
 	m.prevTick = tick
 
@@ -86,4 +78,15 @@ func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 	}
 
 	return buf[:readBytes], nil
+}
+
+func cpuUsagePercent(prev, curr CpuTicks) float64 {
+	if prev != (CpuTicks{}) && curr.Total > prev.Total && curr.Idle >= prev.Idle {
+		deltaTotal := float64(curr.Total - prev.Total)
+		deltaIdle := float64(curr.Idle - prev.Idle)
+		if deltaTotal > deltaIdle {
+			return (deltaTotal - deltaIdle) / deltaTotal * 100
+		}
+	}
+	return 0
 }

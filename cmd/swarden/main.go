@@ -25,12 +25,13 @@ func main() {
 	}()
 
 	mux := http.NewServeMux()
+	mux.Handle("GET /", server.UIHandler())
 	mux.HandleFunc("GET /metrics", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		port = "8080"
+		port = "6701"
 	}
 
 	log.Println("server is running on :", port)
