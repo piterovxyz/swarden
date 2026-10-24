@@ -3,7 +3,7 @@ import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, "../", "");
-    const backendPort = env.PORT || "8080";
+    const backendPort = env.PORT || "6701";
     const backendHost = env.HOST || "127.0.0.1";
     const targetHost = backendHost === "0.0.0.0" ? "127.0.0.1" : backendHost;
 

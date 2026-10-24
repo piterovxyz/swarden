@@ -31,7 +31,7 @@ func main() {
 	port := os.Getenv("PORT")
 
 	if port == "" {
-		port = "8080"
+		port = "6701"
 	}
 
 	log.Println("server is running on :", port)
