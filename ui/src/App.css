@@ -40,28 +40,28 @@ body {
 }
 
 .main-content {
-    min-height: 100vh;
     background: var(--bg-page);
+    display: flex;
 }
 
 .page-content {
     display: flex;
     flex-direction: column;
     gap: 24px;
-    width: min(100%, 720px);
     margin: 0 auto;
     padding: 32px 24px 48px;
+    align-items: center;
 }
 
 .page-heading {
     margin: 0;
+    display: flex;
 }
 
 .brand {
     display: inline-flex;
     align-items: center;
     gap: 10px;
-    margin: 0;
     color: var(--text-primary);
     font-size: 18px;
     font-weight: 700;
@@ -113,7 +113,6 @@ body {
     flex-wrap: wrap;
     align-items: center;
     justify-content: flex-start;
-    gap: 16px 40px;
 }
 .metric-label {
     color: var(--text-secondary);

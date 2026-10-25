@@ -21,6 +21,16 @@
         metrics ? Math.min(Math.max(metrics.cpu.usage_percent, 0), 100) : 0,
     );
 
+    let memoryAvaialble = $derived(
+        metrics && metrics.mem.available > 0
+            ? metrics.mem.available / 1024 / 1024
+            : 0,
+    );
+
+    let memoryTotal = $derived(
+        metrics && metrics.mem.total > 0 ? metrics.mem.total / 1024 / 1024 : 0,
+    );
+
     onMount(() =>
         subscribeToMetrics(
             (value) => {
@@ -70,6 +80,8 @@
                 label="Memory"
                 variant="memory"
                 percent={memoryPercent}
+                memTotal={memoryTotal}
+                memAvailable={memoryAvaialble}
                 loading={!metrics}
             />
         </div>
