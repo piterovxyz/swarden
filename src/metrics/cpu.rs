@@ -16,6 +16,9 @@ pub struct CpuTicks {
 impl std::str::FromStr for CpuTicks {
     type Err = MetricsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
+        if !s.starts_with("cpu") {
+            return Err(MetricsError::ParseError);
+        }
         let mut ticks = CpuTicks { total: 0, idle: 0 };
         if let Some(cpu_stat) = s.lines().next() {
             ticks.idle = cpu_stat
