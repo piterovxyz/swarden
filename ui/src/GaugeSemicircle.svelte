@@ -62,11 +62,11 @@
                     {#if loading}
                         —
                     {:else}
-                        {memTotal.toFixed(1)}<span class="gauge-mem-mb">MB</span
+                        {memTotal.toFixed(1)}<span class="gauge-mem-mb">GB</span
                         >
                         <span class="gauge-mem-separator">/</span>
                         {memAvailable.toFixed(1)}<span class="gauge-mem-mb"
-                            >MB</span
+                            >GB</span
                         >
                     {/if}
                 </div>
