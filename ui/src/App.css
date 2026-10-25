@@ -67,18 +67,6 @@ body {
     font-weight: 700;
     letter-spacing: -0.4px;
 }
-.brand-mark {
-    display: grid;
-    width: 28px;
-    height: 28px;
-    place-items: center;
-    border-radius: 8px;
-    background: #3d7a6c;
-    color: white;
-    font-size: 16px;
-    font-weight: 700;
-    user-select: none;
-}
 
 .notice {
     display: flex;
@@ -164,7 +152,7 @@ body {
     stroke: var(--gauge-track);
 }
 .gauge-fill {
-    transition: stroke-dasharray 0.35s ease;
+    transition: stroke-dasharray 0.5s ease;
 }
 .gauge-fill-cpu {
     stroke: var(--cpu-fill);
