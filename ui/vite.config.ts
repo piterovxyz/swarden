@@ -3,19 +3,20 @@ import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
     const env = loadEnv(mode, "../", "");
-    const backendPort = env.PORT || "6701";
-    const backendHost = env.HOST || "127.0.0.1";
-    const targetHost = backendHost === "0.0.0.0" ? "127.0.0.1" : backendHost;
+    const backendPort = env.BACKEND_PORT || "6701";
+    const frontendPort = Number(env.FRONTEND_PORT) || 5173;
 
     return {
         plugins: [svelte()],
         server: {
-            host: "0.0.0.0",
-            allowedHosts: true,
-            port: Number(env.FRONTEND_PORT) || 5173,
+            host: "127.0.0.1",
+            allowedHosts: env.ALLOWED_HOSTS
+                ? env.ALLOWED_HOSTS.split(",")
+                : true,
+            port: frontendPort,
             proxy: {
                 "/metrics": {
-                    target: `http://${targetHost}:${backendPort}`,
+                    target: `http://127.0.0.1:${backendPort}`,
                     changeOrigin: true,
                     ws: false,
                 },
