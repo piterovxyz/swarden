@@ -18,10 +18,9 @@ impl std::str::FromStr for MemoryMetrics {
         for line in content.lines() {
             let mut parts = line.split_whitespace();
 
-            if let (Some(k), Ok(v)) = (
-                parts.next(),
-                parts.next().ok_or(MetricsError::ParseError)?.parse::<u64>(),
-            ) {
+            if let (Some(k), Some(v_str)) = (parts.next(), parts.next())
+                && let Ok(v) = v_str.parse::<u64>()
+            {
                 match k.trim_end_matches(':') {
                     "MemTotal" => total_kb = v,
                     "MemAvailable" => available_kb = v,
