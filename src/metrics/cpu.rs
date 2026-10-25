@@ -16,7 +16,7 @@ pub struct CpuTicks {
 impl std::str::FromStr for CpuTicks {
     type Err = MetricsError;
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        if !s.starts_with("cpu") {
+        if !s.starts_with("cpu ") {
             return Err(MetricsError::ParseError);
         }
         let mut ticks = CpuTicks { total: 0, idle: 0 };
@@ -33,6 +33,9 @@ impl std::str::FromStr for CpuTicks {
                 .filter_map(|i| i.parse::<u64>().ok())
                 .take(8)
                 .sum();
+        }
+        if ticks.total == 0 {
+            return Err(MetricsError::ParseError);
         }
         Ok(ticks)
     }
