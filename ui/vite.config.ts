@@ -10,6 +10,8 @@ export default defineConfig(({ mode }) => {
     return {
         plugins: [svelte()],
         server: {
+            host: "0.0.0.0",
+            allowedHosts: true,
             port: Number(env.FRONTEND_PORT) || 5173,
             proxy: {
                 "/metrics": {
