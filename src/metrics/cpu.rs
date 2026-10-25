@@ -27,6 +27,7 @@ impl std::str::FromStr for CpuTicks {
 
             ticks.total = cpu_stat
                 .split_whitespace()
+                .take(8)
                 .filter_map(|i| i.parse::<u64>().ok())
                 .sum();
         }
