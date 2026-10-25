@@ -22,7 +22,7 @@ use crate::server::state::AppState;
 #[tokio::main]
 async fn main() {
     let config = ServerConfig::from_env();
-    let (tx, _) = broadcast::channel::<SystemMetrics>(16);
+    let (tx, _) = broadcast::channel::<SystemMetrics>(32);
 
     let state = AppState {
         metrics: tx.clone(),
@@ -34,7 +34,7 @@ async fn main() {
             if let Ok(metrics) = collector.collect() {
                 let _ = tx.send(metrics);
             }
-            sleep(Duration::from_millis(200)).await;
+            sleep(Duration::from_millis(500)).await;
         }
     });
 
