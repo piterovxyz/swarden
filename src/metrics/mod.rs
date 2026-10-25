@@ -56,7 +56,8 @@ impl MetricsCollector {
             let delta_idle = tick.idle.saturating_sub(ptick.idle);
 
             if delta_total > 0 {
-                (delta_total - delta_idle) as f64 / delta_total as f64 * 100.0
+                let delta_used = delta_total.saturating_sub(delta_idle);
+                (delta_used as f64 / delta_total as f64) * 100.0
             } else {
                 0.0
             }
