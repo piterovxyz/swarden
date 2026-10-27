@@ -15,7 +15,6 @@ use tower_http::cors::CorsLayer;
 
 use crate::config::ServerConfig;
 use crate::metrics::{MetricsCollector, SystemMetrics};
-use crate::server::files::{index, static_file};
 use crate::server::metrics::sse_handler;
 use crate::server::state::AppState;
 
@@ -39,9 +38,7 @@ async fn main() {
     });
 
     let app = Router::new()
-        .route("/", get(index))
-        .route("/{*path}", get(static_file))
-        .route("/metrics", get(sse_handler));
+        .route("/", get(sse_handler));
 
     #[cfg(debug_assertions)]
     let app = app.layer(CorsLayer::permissive());
