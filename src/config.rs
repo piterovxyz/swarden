@@ -9,11 +9,11 @@ impl ServerConfig {
     pub fn from_env() -> Self {
         dotenvy::dotenv().ok();
 
-        let host = std::env::var("HOST")
+        let host = std::env::var("SWARDEN_HOST")
             .ok()
             .unwrap_or(String::from("127.0.0.1"));
 
-        let port = std::env::var("PORT")
+        let port = std::env::var("SWARDEN_PORT")
             .ok()
             .and_then(|p| p.parse().ok())
             .unwrap_or(6701);

@@ -4,7 +4,8 @@ set -eu
 REPO="piterovxyz/swarden"
 BIN_PATH="/usr/local/bin/swarden"
 SERVICE_PATH="/etc/systemd/system/swarden.service"
-BACKEND_PORT="${BACKEND_PORT:-6701}"
+SWARDEN_HOST="${SWARDEN_HOST:-"127.0.0.1"}"
+SWARDEN_HOST="${SWARDEN_HOST:-6701}"
 VERSION="${VERSION:-latest}"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -53,7 +54,7 @@ curl -fsSL "$DOWNLOAD_URL" -o "$TMP_BIN"
 echo "installing binary to ${BIN_PATH}..."
 install -m 0755 "$TMP_BIN" "$BIN_PATH"
 
-echo "configuring systemd service (port ${BACKEND_PORT})..."
+echo "configuring systemd service (port ${SWARDEN_HOST}:${SWARDEN_HOST})..."
 cat <<EOF > "$SERVICE_PATH"
 [Unit]
 Description=Swarden Server Monitor
@@ -64,7 +65,8 @@ Type=simple
 ExecStart=${BIN_PATH}
 Restart=always
 RestartSec=3
-Environment=BACKEND_PORT=${BACKEND_PORT}
+Environment=SWARDEN_HOST=${SWARDEN_HOST}
+Environment=SWARDEN_HOST=${SWARDEN_HOST}
 
 DynamicUser=yes
 ProtectSystem=strict
@@ -80,5 +82,5 @@ systemctl daemon-reload
 systemctl enable swarden
 systemctl restart swarden
 
-echo "swarden is installed and running on port ${BACKEND_PORT}!"
+echo "swarden is installed and running on ${SWARDEN_HOST}:${SWARDEN_HOST}!"
 echo "check status: sudo systemctl status swarden"

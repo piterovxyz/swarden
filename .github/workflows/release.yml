@@ -15,32 +15,21 @@ jobs:
       - name: checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Bun
-        uses: oven-sh/setup-bun@v2
-        with:
-          bun-version: latest
-
-      - name: Build UI
-        working-directory: ui
-        run: |
-          bun i
-          bun run build
-
-      - name: Setup Rust
+      - name: setup rust
         uses: dtolnay/rust-toolchain@stable
         with:
           targets: x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu
 
-      - name: Cache Cargo
+      - name: cache cargo
         uses: Swatinem/rust-cache@v2
 
-      - name: Install ARM64 linker
+      - name: install linker
         run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
 
-      - name: Run tests
+      - name: run tests
         run: cargo test --locked
 
-      - name: Build release binaries
+      - name: build release binaries
         env:
           CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
         run: |
@@ -51,7 +40,7 @@ jobs:
           cp target/aarch64-unknown-linux-gnu/release/swarden release/swarden-linux-arm64
           cd release && sha256sum swarden-linux-* > checksums.txt
 
-      - name: Create GitHub Release
+      - name: create release
         uses: softprops/action-gh-release@v2
         with:
           files: |

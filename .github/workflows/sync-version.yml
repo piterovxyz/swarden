@@ -1,0 +1,56 @@
+name: Sync Cargo.toml version
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  sync-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version-synced: ${{ steps.sync.outputs.version-synced }}
+    steps:
+      - name: checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: sync cargo version with tag
+        id: sync
+        run: |
+          TAG_VERSION="${GITHUB_REF#refs/tags/v}"
+          CARGO_VERSION=$(grep '^version =' Cargo.toml | head -1 | sed 's/version = "\(.*\)"/\1/')
+          
+          if [ "$TAG_VERSION" = "$CARGO_VERSION" ]; then
+            echo "versions already match: v$TAG_VERSION. nothing to do."
+            echo "version-synced=false" >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          
+          echo "updating Cargo.toml: $CARGO_VERSION -> $TAG_VERSION"
+          sed -i "s/^version = \".*\"/version = \"$TAG_VERSION\"/" Cargo.toml
+          
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add Cargo.toml
+          git commit -m "chore: sync version to v$TAG_VERSION"
+          git push origin HEAD
+          
+          echo "version-synced=true" >> "$GITHUB_OUTPUT"
+
+  trigger-release:
+    needs: sync-version
+    if: needs.sync-version.outputs.version-synced == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Trigger Release workflow
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          echo "version was synced, triggering release workflow..."
+          gh workflow run Release --ref ${{ github.ref }}
