@@ -1,7 +1,7 @@
 use std::net::SocketAddr;
 
 pub struct ServerConfig {
-    pub host: &'static str,
+    pub host: String,
     pub port: u16,
 }
 
@@ -11,8 +11,7 @@ impl ServerConfig {
 
         let host = std::env::var("HOST")
             .ok()
-            .and_then(|p| p.parse().ok())
-            .unwrap_or("127.0.0.1");
+            .unwrap_or(String::from("127.0.0.1"));
 
         let port = std::env::var("PORT")
             .ok()
