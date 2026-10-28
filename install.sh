@@ -5,7 +5,7 @@ REPO="piterovxyz/swarden"
 BIN_PATH="/usr/local/bin/swarden"
 SERVICE_PATH="/etc/systemd/system/swarden.service"
 SWARDEN_HOST="${SWARDEN_HOST:-"127.0.0.1"}"
-SWARDEN_HOST="${SWARDEN_HOST:-6701}"
+SWARDEN_PORT="${SWARDEN_PORT:-6701}"
 VERSION="${VERSION:-latest}"
 
 if [ "$(id -u)" -ne 0 ]; then
