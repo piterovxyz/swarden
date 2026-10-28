@@ -66,7 +66,7 @@ ExecStart=${BIN_PATH}
 Restart=always
 RestartSec=3
 Environment=SWARDEN_HOST=${SWARDEN_HOST}
-Environment=SWARDEN_HOST=${SWARDEN_HOST}
+Environment=SWARDEN_PORT=${SWARDEN_PORT}
 
 DynamicUser=yes
 ProtectSystem=strict
