@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net"
 	"net/http"
 	"os"
 	"swarden/internal/metrics"
@@ -27,15 +28,21 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
-	port := os.Getenv("PORT")
+	host := os.Getenv("SWARDEN_HOST")
+	if host == "" {
+		host = "127.0.0.1"
+	}
 
+	port := os.Getenv("SWARDEN_PORT")
 	if port == "" {
 		port = "6701"
 	}
 
-	log.Println("server is running on :", port)
+	addr := net.JoinHostPort(host, port)
 
-	if err := http.ListenAndServe(":"+port, mux); err != nil {
+	log.Println("server is running on ", addr)
+
+	if err := http.ListenAndServe(addr, mux); err != nil {
 		log.Fatal(err)
 	}
 }
