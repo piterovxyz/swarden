@@ -55,8 +55,9 @@ func main() {
 	}
 
 	srv := &http.Server{
-		Addr:    net.JoinHostPort(host, port),
-		Handler: mux,
+		Addr:        net.JoinHostPort(host, port),
+		Handler:     mux,
+		BaseContext: func(_ net.Listener) context.Context { return ctx },
 	}
 
 	go func() {
