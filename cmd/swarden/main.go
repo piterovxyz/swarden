@@ -1,29 +1,43 @@
 package main
 
 import (
+	"context"
+	"errors"
+	"fmt"
 	"log"
 	"net"
 	"net/http"
 	"os"
+	"os/signal"
 	"swarden/internal/metrics"
 	"swarden/internal/server"
+	"syscall"
 	"time"
 )
 
 func main() {
+	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
+	defer stop()
+
 	collector := metrics.NewCollector()
 	broadcast := server.NewBroadcast()
 
 	go func() {
+		ticker := time.NewTicker(time.Millisecond * 500)
+		defer ticker.Stop()
+
 		for {
-			metrics, err := collector.Collect()
-			if err != nil {
-				log.Println("error collecting metrics: ", err)
-				time.Sleep(time.Millisecond * 500)
-				continue
+			select {
+			case <-ctx.Done():
+				return
+			case <-ticker.C:
+				m, err := collector.Collect()
+				if err != nil {
+					log.Println("error collecting metrics: ", err)
+					continue
+				}
+				broadcast.Publish(m)
 			}
-			broadcast.Publish(metrics)
-			time.Sleep(time.Millisecond * 500)
 		}
 	}()
 
@@ -40,11 +54,27 @@ func main() {
 		port = "6701"
 	}
 
-	addr := net.JoinHostPort(host, port)
-
-	log.Println("server is running on ", addr)
-
-	if err := http.ListenAndServe(addr, mux); err != nil {
-		log.Fatal(err)
+	srv := &http.Server{
+		Addr:    net.JoinHostPort(host, port),
+		Handler: mux,
 	}
+
+	go func() {
+		log.Println("server is running on ", srv.Addr)
+		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
+			log.Fatalf("server listen err: %s", err.Error())
+		}
+	}()
+
+	<-ctx.Done()
+	fmt.Println("shutting down swarden...")
+
+	shutCtx, cancel := context.WithTimeout(context.Background(), time.Second*5)
+	defer cancel()
+
+	if err := srv.Shutdown(shutCtx); err != nil {
+		log.Printf("error shut server: %s", err.Error())
+	}
+
+	log.Printf("goodbye!")
 }
