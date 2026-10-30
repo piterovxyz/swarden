@@ -16,12 +16,11 @@ curl -fsSL https://raw.githubusercontent.com/piterovxyz/swarden/main/install.sh 
 
 ## building from source
 
-
 ```bash
-cargo build --release
+CGO_ENABLED=0 go build -ldflags="-s -w" -trimpath -o bin/swarden ./cmd/swarden
 ```
 
-binary will be at `target/release/swarden`.
+binary will be at `bin/swarden`.
 
 ## uninstalling
 

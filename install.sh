@@ -4,8 +4,8 @@ set -eu
 REPO="piterovxyz/swarden"
 BIN_PATH="/usr/local/bin/swarden"
 SERVICE_PATH="/etc/systemd/system/swarden.service"
-SWARDEN_HOST="${SWARDEN_HOST:-"127.0.0.1"}"
-SWARDEN_PORT="${SWARDEN_PORT:-6701}"
+SWARDEN_HOST="${SWARDEN_HOST:-127.0.0.1}"
+SWARDEN_PORT="${SWARDEN_PORT:-${PORT:-6701}}"
 VERSION="${VERSION:-latest}"
 
 if [ "$(id -u)" -ne 0 ]; then
@@ -15,19 +15,24 @@ fi
 
 if [ "${1:-}" = "--uninstall" ]; then
     echo "uninstalling swarden..."
-    systemctl stop swarden 2>/dev/null || true
-    systemctl disable swarden 2>/dev/null || true
+    systemctl disable --now swarden 2>/dev/null || true
     rm -f "$SERVICE_PATH" "$BIN_PATH"
     systemctl daemon-reload
     echo "swarden uninstalled successfully."
     exit 0
 fi
 
-OS="$(uname -s)"
-if [ "$OS" != "Linux" ]; then
-    echo "error: swarden only supports linux (detected: $OS)." >&2
+if [ "$(uname -s)" != "Linux" ]; then
+    echo "error: swarden only supports linux." >&2
     exit 1
 fi
+
+for cmd in curl systemctl; do
+    if ! command -v "$cmd" >/dev/null 2>&1; then
+        echo "error: required command not found: $cmd" >&2
+        exit 1
+    fi
+done
 
 ARCH="$(uname -m)"
 case "$ARCH" in
@@ -54,7 +59,7 @@ curl -fsSL "$DOWNLOAD_URL" -o "$TMP_BIN"
 echo "installing binary to ${BIN_PATH}..."
 install -m 0755 "$TMP_BIN" "$BIN_PATH"
 
-echo "configuring systemd service (port ${SWARDEN_HOST}:${SWARDEN_HOST})..."
+echo "configuring systemd service (${SWARDEN_HOST}:${SWARDEN_PORT})..."
 cat <<EOF > "$SERVICE_PATH"
 [Unit]
 Description=Swarden Server Monitor
@@ -67,6 +72,7 @@ Restart=always
 RestartSec=3
 Environment=SWARDEN_HOST=${SWARDEN_HOST}
 Environment=SWARDEN_PORT=${SWARDEN_PORT}
+Environment=PORT=${SWARDEN_PORT}
 
 DynamicUser=yes
 ProtectSystem=strict
@@ -82,5 +88,5 @@ systemctl daemon-reload
 systemctl enable swarden
 systemctl restart swarden
 
-echo "swarden is installed and running on ${SWARDEN_HOST}:${SWARDEN_HOST}!"
+echo "swarden is installed and running on ${SWARDEN_HOST}:${SWARDEN_PORT}!"
 echo "check status: sudo systemctl status swarden"

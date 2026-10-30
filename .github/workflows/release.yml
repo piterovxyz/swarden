@@ -11,33 +11,29 @@ permissions:
 jobs:
   release:
     runs-on: ubuntu-latest
+    timeout-minutes: 5
     steps:
       - name: checkout code
         uses: actions/checkout@v4
 
-      - name: setup rust
-        uses: dtolnay/rust-toolchain@stable
+      - name: setup go
+        uses: actions/setup-go@v5
         with:
-          targets: x86_64-unknown-linux-gnu,aarch64-unknown-linux-gnu
-
-      - name: cache cargo
-        uses: Swatinem/rust-cache@v2
-
-      - name: install linker
-        run: sudo apt-get update && sudo apt-get install -y gcc-aarch64-linux-gnu
+          go-version-file: go.mod
+          cache: false
 
       - name: run tests
-        run: cargo test --locked
+        run: go test -race ./...
 
       - name: build release binaries
         env:
-          CARGO_TARGET_AARCH64_UNKNOWN_LINUX_GNU_LINKER: aarch64-linux-gnu-gcc
+          CGO_ENABLED: "0"
+          GOOS: linux
         run: |
           mkdir -p release
-          cargo build --locked --release --target x86_64-unknown-linux-gnu
-          cargo build --locked --release --target aarch64-unknown-linux-gnu
-          cp target/x86_64-unknown-linux-gnu/release/swarden release/swarden-linux-amd64
-          cp target/aarch64-unknown-linux-gnu/release/swarden release/swarden-linux-arm64
+          GOARCH=amd64 go build -ldflags="-s -w -buildid=" -trimpath -o release/swarden-linux-amd64 ./cmd/swarden &
+          GOARCH=arm64 go build -ldflags="-s -w -buildid=" -trimpath -o release/swarden-linux-arm64 ./cmd/swarden &
+          wait
           cd release && sha256sum swarden-linux-* > checksums.txt
 
       - name: create release
