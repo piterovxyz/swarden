@@ -19,9 +19,11 @@ func main() {
 			metrics, err := collector.Collect()
 			if err != nil {
 				log.Println("error collecting metrics: ", err)
+				time.Sleep(time.Millisecond * 500)
+				continue
 			}
 			broadcast.Publish(metrics)
-			time.Sleep(time.Millisecond * 200)
+			time.Sleep(time.Millisecond * 500)
 		}
 	}()
 
