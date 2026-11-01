@@ -7,6 +7,7 @@ import (
 	"log"
 	"net"
 	"net/http"
+	"net/http/pprof"
 	"os"
 	"os/signal"
 	"swarden/internal/metrics"
@@ -44,6 +45,16 @@ func main() {
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /", (&server.Handler{Broadcast: broadcast}).MetricsHandler)
 
+	if os.Getenv("DEBUG") == "1" {
+		mux.HandleFunc("GET /debug/pprof/", pprof.Index)
+		mux.HandleFunc("GET /debug/pprof/cmdline", pprof.Cmdline)
+		mux.HandleFunc("GET /debug/pprof/profile", pprof.Profile)
+		mux.HandleFunc("GET /debug/pprof/symbol", pprof.Symbol)
+		mux.HandleFunc("GET /debug/pprof/trace", pprof.Trace)
+
+		fmt.Println(">>> pprof enabled! <<<")
+	}
+
 	host := os.Getenv("SWARDEN_HOST")
 	if host == "" {
 		host = "127.0.0.1"
@@ -61,7 +72,7 @@ func main() {
 	}
 
 	go func() {
-		log.Println("server is running on ", srv.Addr)
+		log.Println("server is running on", srv.Addr)
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatalf("server listen err: %s", err.Error())
 		}
