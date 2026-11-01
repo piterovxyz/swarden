@@ -12,12 +12,12 @@ type SystemMetrics struct {
 	Cpu CpuMetrics `json:"cpu"`
 }
 
-type MetricsCollector struct {
+type Collector struct {
 	buf      [8192]byte
 	prevTick CpuTicks
 }
 
-func (m *MetricsCollector) Collect() (SystemMetrics, error) {
+func (m *Collector) Collect() (SystemMetrics, error) {
 	memInfo, err := getInfo("/proc/meminfo", &m.buf)
 	if err != nil {
 		return SystemMetrics{}, err
@@ -50,8 +50,8 @@ func (m *MetricsCollector) Collect() (SystemMetrics, error) {
 	}, nil
 }
 
-func NewCollector() MetricsCollector {
-	return MetricsCollector{}
+func NewCollector() Collector {
+	return Collector{}
 }
 
 func getInfo(path string, buf *[8192]byte) ([]byte, error) {
