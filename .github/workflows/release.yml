@@ -22,6 +22,11 @@ jobs:
           go-version-file: go.mod
           cache: false
 
+      - name: run lint
+        uses: golangci/golangci-lint-action@v8
+        with:
+          version: latest
+
       - name: run tests
         run: go test -race ./...
 
