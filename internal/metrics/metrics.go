@@ -9,12 +9,12 @@ import (
 
 type SystemMetrics struct {
 	Mem MemMetrics `json:"mem"`
-	Cpu CpuMetrics `json:"cpu"`
+	CPU CPUMetrics `json:"cpu"`
 }
 
 type Collector struct {
 	buf      [8192]byte
-	prevTick CpuTicks
+	prevTick CPUTicks
 }
 
 func (m *Collector) Collect() (SystemMetrics, error) {
@@ -33,7 +33,7 @@ func (m *Collector) Collect() (SystemMetrics, error) {
 		return SystemMetrics{}, err
 	}
 
-	tick, err := ParseCpuTicks(cpuInfo)
+	tick, err := ParseCPUTicks(cpuInfo)
 	if err != nil {
 		return SystemMetrics{}, err
 	}
@@ -44,7 +44,7 @@ func (m *Collector) Collect() (SystemMetrics, error) {
 
 	return SystemMetrics{
 		Mem: mem,
-		Cpu: CpuMetrics{
+		CPU: CPUMetrics{
 			UsagePercent: cpuUsage,
 		},
 	}, nil
@@ -59,7 +59,7 @@ func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 	if err != nil {
 		return nil, fmt.Errorf("opening %s: %w", path, err)
 	}
-	defer file.Close()
+	defer func() { _ = file.Close() }()
 
 	readBytes := 0
 
@@ -80,8 +80,8 @@ func getInfo(path string, buf *[8192]byte) ([]byte, error) {
 	return buf[:readBytes], nil
 }
 
-func cpuUsagePercent(prev, curr CpuTicks) float64 {
-	if prev != (CpuTicks{}) && curr.Total > prev.Total && curr.Idle >= prev.Idle {
+func cpuUsagePercent(prev, curr CPUTicks) float64 {
+	if prev != (CPUTicks{}) && curr.Total > prev.Total && curr.Idle >= prev.Idle {
 		deltaTotal := float64(curr.Total - prev.Total)
 		deltaIdle := float64(curr.Idle - prev.Idle)
 		if deltaTotal > deltaIdle {

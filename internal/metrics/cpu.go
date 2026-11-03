@@ -7,29 +7,29 @@ import (
 	"strings"
 )
 
-type CpuMetrics struct {
+type CPUMetrics struct {
 	UsagePercent float64 `json:"usage_percent"`
 }
 
-type CpuTicks struct {
+type CPUTicks struct {
 	Total uint64 `json:"total"`
 	Idle  uint64 `json:"idle"`
 }
 
-func ParseCpuTicks(s []byte) (CpuTicks, error) {
+func ParseCPUTicks(s []byte) (CPUTicks, error) {
 	cpuStat, _, _ := bytes.Cut(s, []byte("\n"))
 	parts := strings.Fields(string(cpuStat))
 
 	if len(parts) < 9 || parts[0] != "cpu" {
-		return CpuTicks{}, errors.New("parsing /proc/stat: invalid format")
+		return CPUTicks{}, errors.New("parsing /proc/stat: invalid format")
 	}
 
-	var ticks CpuTicks
+	var ticks CPUTicks
 
 	for i := 1; i <= 8; i++ {
 		val, err := strconv.ParseUint(parts[i], 10, 64)
 		if err != nil {
-			return CpuTicks{}, err
+			return CPUTicks{}, err
 		}
 
 		ticks.Total += val
@@ -40,7 +40,7 @@ func ParseCpuTicks(s []byte) (CpuTicks, error) {
 	}
 
 	if ticks.Total == 0 {
-		return CpuTicks{}, errors.New("parsing /proc/stat: total ticks is 0")
+		return CPUTicks{}, errors.New("parsing /proc/stat: total ticks is 0")
 	}
 
 	return ticks, nil
