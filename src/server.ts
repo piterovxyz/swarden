@@ -5,7 +5,12 @@ const clients = new Set<ReadableStreamDefaultController>();
 export function broadcast(message: SystemMetrics) {
   const messageString = JSON.stringify(message);
   for (const client of clients) {
-    client.enqueue(`data: ${messageString}\n\n`);
+    try {
+      client.enqueue(`data: ${messageString}\n\n`);
+    } catch (error) {
+      console.error('error sending message to client:', error);
+      clients.delete(client);
+    }
   }
 }
 
