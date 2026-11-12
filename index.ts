@@ -1,6 +1,11 @@
 import { Collector } from './src/metrics/collector';
 import { broadcast } from './src/server';
 
+if (process.platform !== 'linux') {
+  console.error('this daemon can only be run on linux');
+  process.exit(1);
+}
+
 const collector = new Collector();
 let metrics = collector.collect();
 
