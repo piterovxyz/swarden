@@ -1,16 +1,17 @@
-import { afterAll, beforeAll, describe, expect, test } from 'bun:test';
+import assert from 'node:assert/strict';
 import * as fs from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
-import { Collector, getInfo } from './collector';
+import { after, before, describe, test } from 'node:test';
+import { Collector, getInfo } from './collector.ts';
 
 let dir: string;
 
-beforeAll(() => {
+before(() => {
   dir = fs.mkdtempSync(join(tmpdir(), 'collector-test-'));
 });
 
-afterAll(() => {
+after(() => {
   fs.rmSync(dir, { recursive: true, force: true });
 });
 
@@ -24,14 +25,14 @@ describe('Collector.collect', () => {
 
     const collector = new Collector({ stat: statPath, meminfo: memPath });
 
-    expect(collector.collect()).toEqual({
+    assert.deepEqual(collector.collect(), {
       cpu: { usage_percent: 0 },
       mem: { total: 16000, available: 8000 },
     });
 
     fs.writeFileSync(statPath, 'cpu  1100 0 0 600 0 0 0 0\n');
 
-    expect(collector.collect()).toEqual({
+    assert.deepEqual(collector.collect(), {
       cpu: { usage_percent: 50 },
       mem: { total: 16000, available: 8000 },
     });
@@ -43,7 +44,7 @@ describe('Collector.collect', () => {
       meminfo: join(dir, 'missing2'),
     });
 
-    expect(() => collector.collect()).toThrow();
+    assert.throws(() => collector.collect());
   });
 });
 
@@ -57,9 +58,9 @@ describe('getInfo', () => {
     fs.writeFileSync(shortPath, new Uint8Array(5).fill(0x42));
 
     const large = getInfo(buf, largePath);
-    expect(large.length).toBe(8192);
+    assert.equal(large.length, 8192);
 
     const short = getInfo(buf, shortPath);
-    expect(short).toEqual(new Uint8Array(5).fill(0x42));
+    assert.deepEqual(short, new Uint8Array(5).fill(0x42));
   });
 });

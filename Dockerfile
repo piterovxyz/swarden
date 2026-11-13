@@ -1,14 +1,8 @@
-FROM --platform=$BUILDPLATFORM oven/bun:1.4.4-slim AS build
+FROM node:26-slim
 WORKDIR /app
-COPY package.json bun.lock ./
-RUN bun install --frozen-lockfile
-COPY . .
-RUN bun build ./index.ts --target=bun --outdir=dist
-
-FROM oven/bun:1.4.4-slim
-WORKDIR /app
-COPY --from=build /app/dist ./dist
+COPY package.json index.ts ./
+COPY src ./src
 ENV PORT=6701
 EXPOSE 6701
-USER bun
-CMD ["bun", "dist/index.js"]
+USER node
+CMD ["node", "index.ts"]

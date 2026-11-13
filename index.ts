@@ -1,18 +1,22 @@
-import { Collector } from './src/metrics/collector';
-import { broadcast, startServer } from './src/server';
+import type { Server } from 'node:http';
+import { setInterval as every } from 'node:timers/promises';
+import { Collector } from './src/metrics/collector.ts';
+import { broadcast, parsePort, startServer } from './src/server.ts';
 
 if (process.platform !== 'linux') {
   console.error('this daemon can only be run on linux');
   process.exit(1);
 }
 
+let server: Server;
 try {
-  const server = startServer();
-  console.log(`Server started on port ${server.port}`);
+  const port = parsePort(process.env.PORT);
+  server = await startServer(port);
+  console.log(`Server started on port ${port}`);
 
-  const shutdown = async () => {
-    await server.stop(true);
-    process.exit(0);
+  const shutdown = () => {
+    server.closeAllConnections();
+    server.close(() => process.exit(0));
   };
 
   process.on('SIGINT', shutdown);
@@ -24,12 +28,9 @@ try {
 
 const collector = new Collector();
 
-while (true) {
-  await Bun.sleep(500);
-
+for await (const _ of every(500)) {
   try {
-    const metrics = collector.collect();
-    broadcast(metrics);
+    broadcast(collector.collect());
   } catch (error) {
     console.error('error collecting metrics: ', error);
   }

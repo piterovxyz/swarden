@@ -1,11 +1,13 @@
-import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
-import type { SystemMetrics } from './metrics/collector';
-import { broadcast, parsePort, startServer } from './server';
-
-type Server = ReturnType<typeof startServer>;
+import assert from 'node:assert/strict';
+import type { Server } from 'node:http';
+import { type AddressInfo, createServer as createTcpServer, Server as NetServer } from 'node:net';
+import { afterEach, beforeEach, describe, mock, test } from 'node:test';
+import { setTimeout as sleep } from 'node:timers/promises';
+import type { SystemMetrics } from './metrics/collector.ts';
+import { broadcast, connectedClients, parsePort, startServer } from './server.ts';
 
 interface Client {
-  response: Promise<Response>;
+  response: Response;
   abort: () => void;
 }
 
@@ -23,22 +25,25 @@ const sseEvent = (message: SystemMetrics) => `${SSE_PREFIX}${JSON.stringify(mess
 
 const countEvents = (text: string) => text.split('\n\n').length - 1;
 
-function listen(port?: number): Server {
-  const server = startServer(port);
+async function listen(port?: number): Promise<Server> {
+  const server = await startServer(port);
   servers.push(server);
   return server;
 }
 
-const urlOf = (server: Server, path = '/') => `http://127.0.0.1:${server.port}${path}`;
+const portOf = (server: Server) => (server.address() as AddressInfo).port;
 
-function getFreePort(): number {
-  const probe = Bun.serve({ port: 0, fetch: () => new Response() });
-  const port = probe.port;
-  probe.stop(true);
-  if (port === undefined) {
-    throw new Error('probe server has no TCP port');
-  }
-  return port;
+const urlOf = (server: Server, path = '/') => `http://127.0.0.1:${portOf(server)}${path}`;
+
+function getFreePort(): Promise<number> {
+  return new Promise((resolve, reject) => {
+    const probe = createTcpServer();
+    probe.once('error', reject);
+    probe.listen(0, () => {
+      const { port } = probe.address() as AddressInfo;
+      probe.close(() => resolve(port));
+    });
+  });
 }
 
 async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
@@ -47,25 +52,21 @@ async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
     if (Date.now() > deadline) {
       throw new Error('condition was not met in time');
     }
-    await Bun.sleep(20);
+    await sleep(20);
   }
 }
 
 async function subscribe(server: Server, path = '/'): Promise<Client> {
   const controller = new AbortController();
-  const before = server.pendingRequests;
-  const response = fetch(urlOf(server, path), { signal: controller.signal });
-  response.catch(() => undefined);
-  await waitUntil(() => server.pendingRequests > before);
+  const response = await fetch(urlOf(server, path), { signal: controller.signal });
   return { response, abort: () => controller.abort() };
 }
 
-async function readerOf(client: Client) {
-  const response = await client.response;
-  if (!response.body) {
+function readerOf(client: Client) {
+  if (!client.response.body) {
     throw new Error('response has no body');
   }
-  return response.body.getReader();
+  return client.response.body.getReader();
 }
 
 async function readEvents(
@@ -84,29 +85,37 @@ async function readEvents(
   return text;
 }
 
+function closeServer(server: Server): Promise<void> {
+  server.closeAllConnections();
+  return new Promise((resolve) => {
+    server.close(() => resolve());
+  });
+}
+
 afterEach(async () => {
   for (const server of servers.splice(0)) {
-    await server.stop(true);
+    await closeServer(server);
   }
+  await waitUntil(() => connectedClients() === 0);
 });
 
 describe('broadcast', () => {
   test('does not throw when there are no connected clients', () => {
-    expect(() => broadcast(metrics(1))).not.toThrow();
+    assert.doesNotThrow(() => broadcast(metrics(1)));
   });
 
   test('sends the message strictly in SSE format: "data: <json>\\n\\n"', async () => {
-    const server = listen(0);
+    const server = await listen(0);
     const client = await subscribe(server);
     const message = metrics(42.5);
 
     broadcast(message);
 
-    expect(await readEvents(await readerOf(client), 1)).toBe(sseEvent(message));
+    assert.equal(await readEvents(readerOf(client), 1), sseEvent(message));
   });
 
   test('separates multiple messages with a blank line', async () => {
-    const server = listen(0);
+    const server = await listen(0);
     const client = await subscribe(server);
     const first = metrics(1);
     const second = metrics(2);
@@ -114,28 +123,28 @@ describe('broadcast', () => {
     broadcast(first);
     broadcast(second);
 
-    expect(await readEvents(await readerOf(client), 2)).toBe(sseEvent(first) + sseEvent(second));
+    assert.equal(await readEvents(readerOf(client), 2), sseEvent(first) + sseEvent(second));
   });
 
   test('broadcasts the same message to all connected clients', async () => {
-    const server = listen(0);
+    const server = await listen(0);
     const clients = [await subscribe(server), await subscribe(server), await subscribe(server)];
     const message = metrics(10);
 
     broadcast(message);
 
     for (const client of clients) {
-      expect(await readEvents(await readerOf(client), 1)).toBe(sseEvent(message));
+      assert.equal(await readEvents(readerOf(client), 1), sseEvent(message));
     }
   });
 
   test('a disconnected client does not stop broadcasting to the others', async () => {
-    const server = listen(0);
+    const server = await listen(0);
     const gone = await subscribe(server);
     const healthy = [await subscribe(server), await subscribe(server)];
 
     gone.abort();
-    await waitUntil(() => server.pendingRequests === healthy.length);
+    await waitUntil(() => connectedClients() === healthy.length);
 
     const first = metrics(1);
     const second = metrics(2);
@@ -143,24 +152,26 @@ describe('broadcast', () => {
     broadcast(second);
 
     for (const client of healthy) {
-      expect(await readEvents(await readerOf(client), 2)).toBe(sseEvent(first) + sseEvent(second));
+      assert.equal(await readEvents(readerOf(client), 2), sseEvent(first) + sseEvent(second));
     }
   });
 
   test('broadcast does not throw when all clients have disconnected', async () => {
-    const server = listen(0);
+    const server = await listen(0);
     const clients = [await subscribe(server), await subscribe(server)];
 
     for (const client of clients) {
       client.abort();
     }
-    await waitUntil(() => server.pendingRequests === 0);
+    await waitUntil(() => connectedClients() === 0);
 
-    expect(() => broadcast(metrics(1))).not.toThrow();
+    assert.doesNotThrow(() => broadcast(metrics(1)));
   });
 
-  test('under a large message flood, no messages are lost and they arrive in order', async () => {
-    const server = listen(0);
+  test('under a large message flood, no messages are lost and they arrive in order', {
+    timeout: 30_000,
+  }, async () => {
+    const server = await listen(0);
     const clients = [await subscribe(server), await subscribe(server)];
     const total = 10_000;
 
@@ -170,9 +181,9 @@ describe('broadcast', () => {
 
     const expected = Array.from({ length: total }, (_, i) => sseEvent(metrics(i))).join('');
     for (const client of clients) {
-      expect(await readEvents(await readerOf(client), total)).toBe(expected);
+      assert.equal(await readEvents(readerOf(client), total), expected);
     }
-  }, 30_000);
+  });
 });
 
 describe('startServer', () => {
@@ -183,7 +194,7 @@ describe('startServer', () => {
   });
 
   afterEach(() => {
-    mock.restore();
+    mock.restoreAll();
     if (originalPort === undefined) {
       delete process.env.PORT;
     } else {
@@ -192,65 +203,66 @@ describe('startServer', () => {
   });
 
   test('sends SSE headers and status 200 on GET /', async () => {
-    const server = listen(0);
-    const client = await subscribe(server);
-    broadcast(metrics(1));
+    const server = await listen(0);
+    const { response } = await subscribe(server);
 
-    const response = await client.response;
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get('content-type')).toBe('text/event-stream');
-    expect(response.headers.get('cache-control')).toBe('no-cache');
-    expect(response.headers.get('connection')).toBe('keep-alive');
-    expect(response.headers.get('content-length')).toBeNull();
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'text/event-stream');
+    assert.equal(response.headers.get('cache-control'), 'no-cache');
+    assert.equal(response.headers.get('connection'), 'keep-alive');
+    assert.equal(response.headers.get('content-length'), null);
   });
 
   test('handles GET / with query parameters as an SSE stream', async () => {
-    const server = listen(0);
-    const client = await subscribe(server, '/?token=1');
-    broadcast(metrics(1));
+    const server = await listen(0);
+    const { response } = await subscribe(server, '/?token=1');
 
-    const response = await client.response;
-
-    expect(response.status).toBe(200);
-    expect(response.headers.get('content-type')).toBe('text/event-stream');
+    assert.equal(response.status, 200);
+    assert.equal(response.headers.get('content-type'), 'text/event-stream');
   });
 
   test('responds 404 to unknown paths', async () => {
-    const response = await fetch(urlOf(listen(0), '/metrics'));
+    const server = await listen(0);
+    const response = await fetch(urlOf(server, '/metrics'));
 
-    expect(response.status).toBe(404);
-    expect(await response.text()).toBe('not found');
+    assert.equal(response.status, 404);
+    assert.equal(await response.text(), 'not found');
   });
 
-  test('uses the passed port', () => {
-    const port = getFreePort();
+  test('uses the passed port', async () => {
+    const port = await getFreePort();
 
-    expect(listen(port).port).toBe(port);
+    assert.equal(portOf(await listen(port)), port);
   });
 
-  test('uses the port from the PORT environment variable', () => {
-    const port = getFreePort();
+  test('uses the port from the PORT environment variable', async () => {
+    const port = await getFreePort();
     process.env.PORT = String(port);
 
-    expect(listen().port).toBe(port);
+    assert.equal(portOf(await listen()), port);
   });
 
-  test.each([['abc'], ['-1'], ['65536'], ['3.14'], ['']])(
-    'does not crash on invalid PORT=%s and falls back to the default port',
-    (value) => {
+  for (const value of ['abc', '-1', '65536', '3.14', '']) {
+    test(`does not crash on invalid PORT=${JSON.stringify(value)} and falls back to the default port`, async () => {
       process.env.PORT = value;
-      const serve = spyOn(Bun, 'serve').mockImplementation(((options: { port: number }) => ({
-        port: options.port,
-      })) as unknown as typeof Bun.serve);
+      const listenPorts: number[] = [];
+      mock.method(
+        NetServer.prototype,
+        'listen',
+        function (this: NetServer, port: number, callback: () => void) {
+          listenPorts.push(port);
+          callback();
+          return this;
+        },
+      );
 
-      expect(() => startServer()).not.toThrow();
-      expect(serve.mock.calls[0]?.[0]).toMatchObject({ port: DEFAULT_PORT });
-    },
-  );
+      await assert.doesNotReject(startServer());
+      assert.deepEqual(listenPorts, [DEFAULT_PORT]);
+    });
+  }
 
   describe('parsePort', () => {
-    test.each([
+    const cases: [string | undefined, number][] = [
       [undefined, DEFAULT_PORT],
       ['', DEFAULT_PORT],
       ['1024', DEFAULT_PORT],
@@ -261,8 +273,12 @@ describe('startServer', () => {
       ['-1', DEFAULT_PORT],
       ['65536', DEFAULT_PORT],
       ['3.14', DEFAULT_PORT],
-    ])('parsePort(%p) returns %p', (value, expected) => {
-      expect(parsePort(value)).toBe(expected);
-    });
+    ];
+
+    for (const [value, expected] of cases) {
+      test(`parsePort(${JSON.stringify(value)}) returns ${expected}`, () => {
+        assert.equal(parsePort(value), expected);
+      });
+    }
   });
 });

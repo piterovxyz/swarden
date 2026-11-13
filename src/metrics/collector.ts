@@ -1,8 +1,8 @@
 import * as fs from 'node:fs';
-import type { CpuMetrics, CpuTicks } from './cpu';
-import { cpuUsagePercent, parseCpuTick } from './cpu';
-import type { MemMetrics } from './mem';
-import { parseMemMetrics } from './mem';
+import type { CpuMetrics, CpuTicks } from './cpu.ts';
+import { cpuUsagePercent, parseCpuTick } from './cpu.ts';
+import type { MemMetrics } from './mem.ts';
+import { parseMemMetrics } from './mem.ts';
 
 export interface SystemMetrics {
   cpu: CpuMetrics;
@@ -22,8 +22,11 @@ const DEFAULT_PATHS: CollectorPaths = {
 export class Collector {
   private buf = new Uint8Array(8192);
   private prevTick: CpuTicks = { total: 0, idle: 0 };
+  private readonly paths: CollectorPaths;
 
-  constructor(private paths: CollectorPaths = DEFAULT_PATHS) {}
+  constructor(paths: CollectorPaths = DEFAULT_PATHS) {
+    this.paths = paths;
+  }
 
   public collect(): SystemMetrics {
     const cpuInfo = getInfo(this.buf, this.paths.stat);

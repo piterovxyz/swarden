@@ -1,19 +1,19 @@
-import type { SystemMetrics } from './metrics/collector';
+import { createServer, type Server, type ServerResponse } from 'node:http';
+import type { SystemMetrics } from './metrics/collector.ts';
 
-const clients = new Set<ReadableStreamDefaultController>();
+const clients = new Set<ServerResponse>();
 
 const DEFAULT_PORT = 6701;
 
 export function broadcast(message: SystemMetrics) {
-  const messageString = JSON.stringify(message);
-  for (const client of clients) {
-    try {
-      client.enqueue(`data: ${messageString}\n\n`);
-    } catch (error) {
-      console.error('error sending message to client:', error);
-      clients.delete(client);
-    }
+  const payload = `data: ${JSON.stringify(message)}\n\n`;
+  for (const res of clients) {
+    res.write(payload);
   }
+}
+
+export function connectedClients(): number {
+  return clients.size;
 }
 
 export function parsePort(value: string | undefined): number {
@@ -29,34 +29,30 @@ export function parsePort(value: string | undefined): number {
   return port;
 }
 
-export function startServer(port?: number): Bun.Server<WebSocket> {
+export function startServer(port?: number): Promise<Server> {
   const listenPort = port ?? parsePort(process.env.PORT);
 
-  return Bun.serve({
-    port: listenPort,
-    fetch(req) {
-      const url = new URL(req.url);
-      if (url.pathname === '/') {
-        let streamController: ReadableStreamDefaultController;
-        const stream = new ReadableStream({
-          start(controller) {
-            streamController = controller;
-            clients.add(streamController);
-          },
-          cancel() {
-            clients.delete(streamController);
-          },
-        });
+  const server = createServer((req, res) => {
+    const url = new URL(req.url ?? '/', 'http://localhost');
 
-        return new Response(stream, {
-          headers: {
-            'Content-Type': 'text/event-stream',
-            'Cache-Control': 'no-cache',
-            Connection: 'keep-alive',
-          },
-        });
-      }
-      return new Response('not found', { status: 404 });
-    },
+    if (url.pathname !== '/') {
+      res.writeHead(404, { 'Content-Type': 'text/plain' }).end('not found');
+      return;
+    }
+
+    res.writeHead(200, {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache',
+      Connection: 'keep-alive',
+    });
+
+    res.flushHeaders();
+    clients.add(res);
+    res.on('close', () => clients.delete(res));
+  });
+
+  return new Promise((resolve, reject) => {
+    server.once('error', reject);
+    server.listen(listenPort, () => resolve(server));
   });
 }
