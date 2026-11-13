@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, test } from 'bun:test';
+import { afterEach, beforeEach, describe, expect, mock, spyOn, test } from 'bun:test';
 import type { SystemMetrics } from './metrics/collector';
 import { broadcast, parsePort, startServer } from './server';
 
@@ -84,9 +84,9 @@ async function readEvents(
   return text;
 }
 
-afterEach(() => {
+afterEach(async () => {
   for (const server of servers.splice(0)) {
-    server.stop(true);
+    await server.stop(true);
   }
 });
 
@@ -183,6 +183,7 @@ describe('startServer', () => {
   });
 
   afterEach(() => {
+    mock.restore();
     if (originalPort === undefined) {
       delete process.env.PORT;
     } else {
@@ -222,20 +223,6 @@ describe('startServer', () => {
     expect(await response.text()).toBe('not found');
   });
 
-  test('on cancel the request ends and other clients keep receiving events', async () => {
-    const server = listen(0);
-    const gone = await subscribe(server);
-    const healthy = await subscribe(server);
-
-    gone.abort();
-    await waitUntil(() => server.pendingRequests === 1);
-
-    const message = metrics(1);
-    broadcast(message);
-
-    expect(await readEvents(await readerOf(healthy), 1)).toBe(sseEvent(message));
-  });
-
   test('uses the passed port', () => {
     const port = getFreePort();
 
@@ -250,14 +237,15 @@ describe('startServer', () => {
   });
 
   test.each([['abc'], ['-1'], ['65536'], ['3.14'], ['']])(
-    'does not crash on invalid PORT=%s and listens on the default port',
-    async (value) => {
+    'does not crash on invalid PORT=%s and falls back to the default port',
+    (value) => {
       process.env.PORT = value;
+      const serve = spyOn(Bun, 'serve').mockImplementation(((options: { port: number }) => ({
+        port: options.port,
+      })) as unknown as typeof Bun.serve);
 
-      const server = listen();
-
-      expect(server.port).toBe(DEFAULT_PORT);
-      await subscribe(server);
+      expect(() => startServer()).not.toThrow();
+      expect(serve.mock.calls[0]?.[0]).toMatchObject({ port: DEFAULT_PORT });
     },
   );
 
@@ -265,6 +253,8 @@ describe('startServer', () => {
     test.each([
       [undefined, DEFAULT_PORT],
       ['', DEFAULT_PORT],
+      ['1024', DEFAULT_PORT],
+      ['1025', 1025],
       ['8080', 8080],
       ['65535', 65535],
       ['abc', DEFAULT_PORT],

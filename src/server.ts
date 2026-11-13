@@ -17,10 +17,15 @@ export function broadcast(message: SystemMetrics) {
 }
 
 export function parsePort(value: string | undefined): number {
-  const port = parseInt(value ?? '', 10);
-  if (Number.isNaN(port) || port <= 1024 || port > 65535) {
+  if (!value || !/^\d+$/.test(value.trim())) {
     return DEFAULT_PORT;
   }
+
+  const port = Number(value);
+  if (port <= 1024 || port > 65535) {
+    return DEFAULT_PORT;
+  }
+
   return port;
 }
 
