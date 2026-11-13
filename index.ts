@@ -23,17 +23,14 @@ try {
 }
 
 const collector = new Collector();
-let metrics = collector.collect();
 
 while (true) {
   await Bun.sleep(500);
 
   try {
-    metrics = collector.collect();
+    const metrics = collector.collect();
+    broadcast(metrics);
   } catch (error) {
     console.error('error collecting metrics: ', error);
-    continue;
   }
-
-  broadcast(metrics);
 }

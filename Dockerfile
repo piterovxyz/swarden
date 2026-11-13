@@ -1,4 +1,4 @@
-FROM oven/bun:1.4.4-slim AS build
+FROM --platform=$BUILDPLATFORM oven/bun:1.4.4-slim AS build
 WORKDIR /app
 COPY package.json bun.lock ./
 RUN bun install --frozen-lockfile
