@@ -9,41 +9,53 @@ export interface SystemMetrics {
   mem: MemMetrics;
 }
 
+export interface CollectorPaths {
+  stat: string;
+  meminfo: string;
+}
+
+const DEFAULT_PATHS: CollectorPaths = {
+  stat: '/proc/stat',
+  meminfo: '/proc/meminfo',
+};
+
 export class Collector {
   private buf = new Uint8Array(8192);
   private prevTick: CpuTicks = { total: 0, idle: 0 };
 
+  constructor(private paths: CollectorPaths = DEFAULT_PATHS) {}
+
   public collect(): SystemMetrics {
-    const cpuInfo = this.getInfo('/proc/stat');
+    const cpuInfo = getInfo(this.buf, this.paths.stat);
     const cpuTick = parseCpuTick(cpuInfo);
     const cpuUsage = cpuUsagePercent(this.prevTick, cpuTick);
 
     this.prevTick = cpuTick;
 
-    const memInfo = this.getInfo('/proc/meminfo');
+    const memInfo = getInfo(this.buf, this.paths.meminfo);
     const memMetrics = parseMemMetrics(memInfo);
 
     return { cpu: { usage_percent: cpuUsage }, mem: memMetrics };
   }
+}
 
-  private getInfo(path: string): Uint8Array {
-    const fd = fs.openSync(path, 'r');
-    let totalBytes = 0;
+export function getInfo(buf: Uint8Array, path: string): Uint8Array {
+  const fd = fs.openSync(path, 'r');
+  let totalBytes = 0;
 
-    try {
-      while (totalBytes < this.buf.length) {
-        const bytesRead = fs.readSync(fd, this.buf, totalBytes, this.buf.length - totalBytes, null);
+  try {
+    while (totalBytes < buf.length) {
+      const bytesRead = fs.readSync(fd, buf, totalBytes, buf.length - totalBytes, null);
 
-        if (bytesRead === 0) {
-          break;
-        }
-
-        totalBytes += bytesRead;
+      if (bytesRead === 0) {
+        break;
       }
-    } finally {
-      fs.closeSync(fd);
-    }
 
-    return this.buf.subarray(0, totalBytes);
+      totalBytes += bytesRead;
+    }
+  } finally {
+    fs.closeSync(fd);
   }
+
+  return buf.subarray(0, totalBytes);
 }
