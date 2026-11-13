@@ -5,7 +5,6 @@
   "private": true,
   "scripts": {
     "test": "bun test",
-    "typecheck": "bun check",
     "lint": "biome check .",
     "lint:fix": "biome check --write ."
   },
