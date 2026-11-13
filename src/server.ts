@@ -16,17 +16,16 @@ export function broadcast(message: SystemMetrics) {
   }
 }
 
-export function startServer(port?: number): Bun.Server<WebSocket> {
-  let listenPort = port ?? parseInt(process.env.PORT ?? '', 10);
-
-  if (
-    listenPort === undefined ||
-    Number.isNaN(listenPort) ||
-    listenPort <= 1024 ||
-    listenPort > 65535
-  ) {
-    listenPort = DEFAULT_PORT;
+export function parsePort(value: string | undefined): number {
+  const port = parseInt(value ?? '', 10);
+  if (Number.isNaN(port) || port <= 1024 || port > 65535) {
+    return DEFAULT_PORT;
   }
+  return port;
+}
+
+export function startServer(port?: number): Bun.Server<WebSocket> {
+  const listenPort = port ?? parsePort(process.env.PORT);
 
   return Bun.serve({
     port: listenPort,
