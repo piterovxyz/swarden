@@ -1,0 +1,8 @@
+services:
+  swarden:
+    image: ghcr.io/piterovxyz/swarden:latest
+    restart: unless-stopped
+    environment:
+      PORT: "6701"
+    ports:
+      - "127.0.0.1:6701:6701"
