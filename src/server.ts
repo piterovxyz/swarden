@@ -33,6 +33,7 @@ export function startServer(port?: number): Promise<Server> {
   const listenPort = port ?? parsePort(process.env.PORT);
 
   const server = createServer((req, res) => {
+    server.requestTimeout = 0;
     const url = new URL(req.url ?? '/', 'http://localhost');
 
     if (url.pathname !== '/') {
