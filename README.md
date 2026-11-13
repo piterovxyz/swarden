@@ -25,14 +25,17 @@ memory values are in kB, as in `/proc/meminfo`. any other path returns `404`.
 
 ## development
 
-requires bun 1.4.4 and linux (the server reads `/proc/stat` and `/proc/meminfo`).
+requires node 26+ and linux (the server reads `/proc/stat` and `/proc/meminfo`).
 
 ```bash
-bun install
-bun test
-bun run lint
-bun index.ts
+npm ci
+npm test
+npm run lint
+npm run typecheck
+npm start
 ```
+
+`npm run dev` restarts the server on file changes.
 
 ## building the image
 

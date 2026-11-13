@@ -36,7 +36,7 @@ export function startServer(port?: number): Promise<Server> {
     const url = new URL(req.url ?? '/', 'http://localhost');
 
     if (url.pathname !== '/') {
-      res.writeHead(404, { 'Content-Type': 'text/plain' }).end('not found');
+      res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('not found');
       return;
     }
 

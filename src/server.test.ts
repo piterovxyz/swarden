@@ -226,6 +226,7 @@ describe('startServer', () => {
     const response = await fetch(urlOf(server, '/metrics'));
 
     assert.equal(response.status, 404);
+    assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
     assert.equal(await response.text(), 'not found');
   });
 
