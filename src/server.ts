@@ -2,6 +2,8 @@ import type { SystemMetrics } from './metrics/collector';
 
 const clients = new Set<ReadableStreamDefaultController>();
 
+const DEFAULT_PORT = 6701;
+
 export function broadcast(message: SystemMetrics) {
   const messageString = JSON.stringify(message);
   for (const client of clients) {
@@ -15,7 +17,16 @@ export function broadcast(message: SystemMetrics) {
 }
 
 export function startServer(port?: number): Bun.Server<WebSocket> {
-  const listenPort = port ?? (process.env.PORT || 6701);
+  let listenPort = port ?? parseInt(process.env.PORT ?? '', 10);
+
+  if (
+    listenPort === undefined ||
+    Number.isNaN(listenPort) ||
+    listenPort <= 1024 ||
+    listenPort > 65535
+  ) {
+    listenPort = DEFAULT_PORT;
+  }
 
   return Bun.serve({
     port: listenPort,
