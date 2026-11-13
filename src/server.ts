@@ -33,7 +33,6 @@ export function startServer(port?: number): Promise<Server> {
   const listenPort = port ?? parsePort(process.env.PORT);
 
   const server = createServer((req, res) => {
-    server.requestTimeout = 0;
     const url = new URL(req.url ?? '/', 'http://localhost');
 
     if (url.pathname !== '/') {
@@ -50,7 +49,10 @@ export function startServer(port?: number): Promise<Server> {
     res.flushHeaders();
     clients.add(res);
     res.on('close', () => clients.delete(res));
+    res.on('error', () => clients.delete(res));
   });
+
+  server.requestTimeout = 0;
 
   return new Promise((resolve, reject) => {
     server.once('error', reject);
