@@ -30,10 +30,10 @@ export class Collector {
     const cpuTick = parseCpuTick(cpuInfo);
     const cpuUsage = cpuUsagePercent(this.prevTick, cpuTick);
 
-    this.prevTick = cpuTick;
-
     const memInfo = getInfo(this.buf, this.paths.meminfo);
     const memMetrics = parseMemMetrics(memInfo);
+
+    this.prevTick = cpuTick;
 
     return { cpu: { usage_percent: cpuUsage }, mem: memMetrics };
   }
