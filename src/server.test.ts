@@ -9,7 +9,7 @@ interface Client {
   abort: () => void;
 }
 
-const DEFAULT_PORT = 6702;
+const DEFAULT_PORT = 6701;
 const SSE_PREFIX = 'data: ';
 
 const servers: Server[] = [];
