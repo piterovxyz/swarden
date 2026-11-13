@@ -14,30 +14,34 @@ export function broadcast(message: SystemMetrics) {
   }
 }
 
-Bun.serve({
-  port: 6701,
-  fetch(req) {
-    const url = new URL(req.url);
-    if (url.pathname === '/') {
-      let streamController: ReadableStreamDefaultController;
-      const stream = new ReadableStream({
-        start(controller) {
-          streamController = controller;
-          clients.add(streamController);
-        },
-        cancel() {
-          clients.delete(streamController);
-        },
-      });
+export function startServer(port?: number): Bun.Server<WebSocket> {
+  const listenPort = port ?? (process.env.PORT || 6701);
 
-      return new Response(stream, {
-        headers: {
-          'Content-Type': 'text/event-stream',
-          'Cache-Control': 'no-cache',
-          Connection: 'keep-alive',
-        },
-      });
-    }
-    return new Response('not found', { status: 404 });
-  },
-});
+  return Bun.serve({
+    port: listenPort,
+    fetch(req) {
+      const url = new URL(req.url);
+      if (url.pathname === '/') {
+        let streamController: ReadableStreamDefaultController;
+        const stream = new ReadableStream({
+          start(controller) {
+            streamController = controller;
+            clients.add(streamController);
+          },
+          cancel() {
+            clients.delete(streamController);
+          },
+        });
+
+        return new Response(stream, {
+          headers: {
+            'Content-Type': 'text/event-stream',
+            'Cache-Control': 'no-cache',
+            Connection: 'keep-alive',
+          },
+        });
+      }
+      return new Response('not found', { status: 404 });
+    },
+  });
+}
