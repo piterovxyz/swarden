@@ -4,7 +4,7 @@ export interface MemMetrics {
 }
 
 export function parseMemMetrics(raw: Uint8Array): MemMetrics {
-  const mem = { total: 0, available: 0 };
+  const mem: MemMetrics = { total: 0, available: 0 };
   const decoder = new TextDecoder();
 
   for (const line of byteLines(raw)) {
