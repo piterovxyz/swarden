@@ -1,5 +1,5 @@
 import type { ServerResponse } from 'node:http';
-import type { SystemMetrics } from '../metrics/collector.ts';
+import type { SystemMetrics } from '@swarden/shared';
 
 const clients = new Set<ServerResponse>();
 

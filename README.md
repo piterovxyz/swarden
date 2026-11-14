@@ -15,7 +15,7 @@ the server listens on `127.0.0.1:6701` by default. to change the port, set `PORT
 
 ## api
 
-`GET /` returns a server-sent events stream (`text/event-stream`) with a new message every 500 ms:
+`GET /sse` returns a server-sent events stream (`text/event-stream`) with a new message every 500 ms:
 
 ```
 data: {"cpu":{"usage_percent":12.5},"mem":{"total":16384000,"available":8192000}}
