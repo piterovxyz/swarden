@@ -1,8 +1,22 @@
 services:
-  swarden:
+  server:
     image: ghcr.io/piterovxyz/swarden:latest
+    build:
+      context: .
+      target: server
     restart: unless-stopped
     environment:
       PORT: "6701"
     ports:
       - "127.0.0.1:6701:6701"
+
+  web:
+    image: ghcr.io/piterovxyz/swarden-web:latest
+    build:
+      context: .
+      target: web
+    restart: unless-stopped
+    depends_on:
+      - server
+    ports:
+      - "127.0.0.1:8080:80"

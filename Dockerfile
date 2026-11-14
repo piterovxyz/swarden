@@ -1,4 +1,20 @@
-FROM node:26-slim
+FROM node:26-slim AS web-build
+WORKDIR /app
+COPY package.json package-lock.json ./
+COPY server/package.json ./server/
+COPY web/package.json ./web/
+COPY shared/package.json ./shared/
+RUN npm ci
+COPY shared ./shared
+COPY web ./web
+RUN npm run build -w web
+
+FROM caddy:2-alpine AS web
+COPY docker/Caddyfile /etc/caddy/Caddyfile
+COPY --from=web-build /app/web/dist /srv
+EXPOSE 80
+
+FROM node:26-slim AS server
 WORKDIR /app
 COPY server/package.json server/index.ts ./
 COPY server/src ./src

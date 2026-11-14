@@ -1,0 +1,14 @@
+:80 {
+	root * /srv
+
+	handle /sse {
+		reverse_proxy server:6701 {
+			flush_interval -1
+		}
+	}
+
+	handle {
+		try_files {path} /index.html
+		file_server
+	}
+}
