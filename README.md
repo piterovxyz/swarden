@@ -32,15 +32,18 @@ npm ci
 npm test
 npm run lint
 npm run typecheck
-npm start
+npm run start:server
+npm run start:web
 ```
 
-`npm run dev` restarts the server on file changes.
+`npm run dev:server` restarts the server on file changes, `npm run dev:web` starts the vite dev server.
 
-## building the image
+## building the images
+
+build both images (`server` and `web`) and start them with:
 
 ```bash
-docker build -t swarden .
+docker compose up --build
 ```
 
 ## license
