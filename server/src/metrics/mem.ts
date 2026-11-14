@@ -1,7 +1,4 @@
-export interface MemMetrics {
-  total: number;
-  available: number;
-}
+import type { MemMetrics } from '@swarden/shared';
 
 export function parseMemMetrics(raw: Uint8Array): MemMetrics {
   const mem: MemMetrics = { total: 0, available: 0 };

@@ -1,5 +1,5 @@
 {
-  "name": "swarden",
+  "name": "swarden-server",
   "private": true,
   "type": "module",
   "engines": {
@@ -9,13 +9,12 @@
     "start": "node index.ts",
     "dev": "node --watch index.ts",
     "test": "node --test",
-    "test:coverage": "node --test --experimental-test-coverage",
-    "lint": "biome check .",
-    "lint:fix": "biome check --write .",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@swarden/shared": "*"
+  },
   "devDependencies": {
-    "@biomejs/biome": "^2.6.7",
     "@types/node": "^26.6.6",
     "typescript": "^6"
   }

@@ -3,10 +3,6 @@ export interface CpuTicks {
   idle: number;
 }
 
-export interface CpuMetrics {
-  usage_percent: number;
-}
-
 export function parseCpuTick(raw: Uint8Array): CpuTicks {
   const newlineindex = raw.indexOf(10);
   const cpuLine = newlineindex !== -1 ? raw.subarray(0, newlineindex) : raw;

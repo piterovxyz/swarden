@@ -3,7 +3,7 @@ import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
-import type { SystemMetrics } from '../metrics/collector.ts';
+import type { SystemMetrics } from '@swarden/shared';
 import { startServer } from './server.ts';
 import { broadcast, connectedClients } from './sse.ts';
 

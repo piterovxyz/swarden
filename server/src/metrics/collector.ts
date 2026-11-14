@@ -1,13 +1,8 @@
 import * as fs from 'node:fs';
-import type { CpuMetrics, CpuTicks } from './cpu.ts';
+import type { SystemMetrics } from '@swarden/shared';
+import type { CpuTicks } from './cpu.ts';
 import { cpuUsagePercent, parseCpuTick } from './cpu.ts';
-import type { MemMetrics } from './mem.ts';
 import { parseMemMetrics } from './mem.ts';
-
-export interface SystemMetrics {
-  cpu: CpuMetrics;
-  mem: MemMetrics;
-}
 
 export interface CollectorPaths {
   stat: string;
