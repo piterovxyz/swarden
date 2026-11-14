@@ -6,8 +6,7 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/metrics': 'http://127.0.0.1:6701',
-      '/api': 'http://127.0.0.1:6701',
+      '/sse': 'http://127.0.0.1:6701',
     },
   },
 });

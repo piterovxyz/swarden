@@ -1,7 +1,8 @@
 import type { Server } from 'node:http';
 import { setInterval as every } from 'node:timers/promises';
 import { Collector } from './src/metrics/collector.ts';
-import { broadcast, parsePort, startServer } from './src/server.ts';
+import { parsePort, startServer } from './src/server/server.ts';
+import { broadcast } from './src/server/sse.ts';
 
 if (process.platform !== 'linux') {
   console.error('this daemon can only be run on linux');
