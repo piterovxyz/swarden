@@ -1,5 +1,5 @@
-import type { Server } from 'node:http';
 import { setInterval as every } from 'node:timers/promises';
+import type { FastifyInstance } from 'fastify';
 import { Collector } from './src/metrics/collector.ts';
 import { parsePort, startServer } from './src/server/server.ts';
 import { broadcast } from './src/server/sse.ts';
@@ -9,15 +9,14 @@ if (process.platform !== 'linux') {
   process.exit(1);
 }
 
-let server: Server;
+let app: FastifyInstance;
 try {
   const port = parsePort(process.env.PORT);
-  server = await startServer(port);
+  app = await startServer(port);
   console.log(`Server started on port ${port}`);
 
   const shutdown = () => {
-    server.closeAllConnections();
-    server.close(() => process.exit(0));
+    app.close().then(() => process.exit(0));
   };
 
   process.on('SIGINT', shutdown);

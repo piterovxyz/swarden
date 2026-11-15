@@ -1,9 +1,9 @@
 import assert from 'node:assert/strict';
-import type { Server } from 'node:http';
 import type { AddressInfo } from 'node:net';
 import { afterEach, describe, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
 import type { SystemMetrics } from '@swarden/shared';
+import type { FastifyInstance } from 'fastify';
 import { startServer } from './server.ts';
 import { broadcast, connectedClients } from './sse.ts';
 
@@ -14,7 +14,7 @@ interface Client {
 
 const SSE_PREFIX = 'data: ';
 
-const servers: Server[] = [];
+const apps: FastifyInstance[] = [];
 
 const metrics = (usage: number): SystemMetrics => ({
   cpu: { usage_percent: usage },
@@ -25,15 +25,15 @@ const sseEvent = (message: SystemMetrics) => `${SSE_PREFIX}${JSON.stringify(mess
 
 const countEvents = (text: string) => text.split('\n\n').length - 1;
 
-async function listen(port?: number): Promise<Server> {
-  const server = await startServer(port);
-  servers.push(server);
-  return server;
+async function listen(port?: number): Promise<FastifyInstance> {
+  const app = await startServer(port);
+  apps.push(app);
+  return app;
 }
 
-const portOf = (server: Server) => (server.address() as AddressInfo).port;
+const portOf = (app: FastifyInstance) => (app.server.address() as AddressInfo).port;
 
-const urlOf = (server: Server, path = '/api/sse') => `http://127.0.0.1:${portOf(server)}${path}`;
+const urlOf = (app: FastifyInstance, path = '/api/sse') => `http://127.0.0.1:${portOf(app)}${path}`;
 
 async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
   const deadline = Date.now() + timeoutMs;
@@ -45,9 +45,9 @@ async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
   }
 }
 
-async function subscribe(server: Server, path = '/api/sse'): Promise<Client> {
+async function subscribe(app: FastifyInstance, path = '/api/sse'): Promise<Client> {
   const controller = new AbortController();
-  const response = await fetch(urlOf(server, path), { signal: controller.signal });
+  const response = await fetch(urlOf(app, path), { signal: controller.signal });
   return { response, abort: () => controller.abort() };
 }
 
@@ -74,16 +74,9 @@ async function readEvents(
   return text;
 }
 
-function closeServer(server: Server): Promise<void> {
-  server.closeAllConnections();
-  return new Promise((resolve) => {
-    server.close(() => resolve());
-  });
-}
-
 afterEach(async () => {
-  for (const server of servers.splice(0)) {
-    await closeServer(server);
+  for (const app of apps.splice(0)) {
+    await app.close();
   }
   await waitUntil(() => connectedClients() === 0);
 });
@@ -94,8 +87,8 @@ describe('broadcast', () => {
   });
 
   test('sends the message strictly in SSE format: "data: <json>\\n\\n"', async () => {
-    const server = await listen(0);
-    const client = await subscribe(server);
+    const app = await listen(0);
+    const client = await subscribe(app);
     const message = metrics(42.5);
 
     broadcast(message);
@@ -104,8 +97,8 @@ describe('broadcast', () => {
   });
 
   test('separates multiple messages with a blank line', async () => {
-    const server = await listen(0);
-    const client = await subscribe(server);
+    const app = await listen(0);
+    const client = await subscribe(app);
     const first = metrics(1);
     const second = metrics(2);
 
@@ -116,8 +109,8 @@ describe('broadcast', () => {
   });
 
   test('broadcasts the same message to all connected clients', async () => {
-    const server = await listen(0);
-    const clients = [await subscribe(server), await subscribe(server), await subscribe(server)];
+    const app = await listen(0);
+    const clients = [await subscribe(app), await subscribe(app), await subscribe(app)];
     const message = metrics(10);
 
     broadcast(message);
@@ -128,9 +121,9 @@ describe('broadcast', () => {
   });
 
   test('a disconnected client does not stop broadcasting to the others', async () => {
-    const server = await listen(0);
-    const gone = await subscribe(server);
-    const healthy = [await subscribe(server), await subscribe(server)];
+    const app = await listen(0);
+    const gone = await subscribe(app);
+    const healthy = [await subscribe(app), await subscribe(app)];
 
     gone.abort();
     await waitUntil(() => connectedClients() === healthy.length);
@@ -146,8 +139,8 @@ describe('broadcast', () => {
   });
 
   test('broadcast does not throw when all clients have disconnected', async () => {
-    const server = await listen(0);
-    const clients = [await subscribe(server), await subscribe(server)];
+    const app = await listen(0);
+    const clients = [await subscribe(app), await subscribe(app)];
 
     for (const client of clients) {
       client.abort();
@@ -160,8 +153,8 @@ describe('broadcast', () => {
   test('under a large message flood, no messages are lost and they arrive in order', {
     timeout: 30_000,
   }, async () => {
-    const server = await listen(0);
-    const clients = [await subscribe(server), await subscribe(server)];
+    const app = await listen(0);
+    const clients = [await subscribe(app), await subscribe(app)];
     const total = 10_000;
 
     for (let i = 0; i < total; i++) {

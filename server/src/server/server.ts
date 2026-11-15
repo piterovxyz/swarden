@@ -1,28 +1,30 @@
-import { createServer, type Server } from 'node:http';
+import Fastify, { type FastifyInstance } from 'fastify';
 import { handleSse } from './sse.ts';
 
 const DEFAULT_PORT = 6701;
 
-export function startServer(port?: number): Promise<Server> {
+export async function startServer(port?: number): Promise<FastifyInstance> {
   const listenPort = port ?? parsePort(process.env.PORT);
 
-  const server = createServer((req, res) => {
-    const url = new URL(req.url ?? '/', 'http://localhost');
+  const app = Fastify({ requestTimeout: 0, forceCloseConnections: true });
 
-    if (req.method === 'GET' && url.pathname === '/api/sse') {
-      handleSse(res);
-      return;
-    }
+  app.register(
+    async (api) => {
+      api.get('/sse', (_req, res) => {
+        res.hijack();
+        handleSse(res.raw);
+      });
+    },
+    { prefix: '/api' },
+  );
 
-    res.writeHead(404, { 'Content-Type': 'text/plain; charset=utf-8' }).end('not found');
+  app.setNotFoundHandler((_request, reply) => {
+    reply.code(404).type('text/plain; charset=utf-8').send('not found');
   });
 
-  server.requestTimeout = 0;
+  await app.listen({ port: listenPort, host: '0.0.0.0' });
 
-  return new Promise((resolve, reject) => {
-    server.once('error', reject);
-    server.listen(listenPort, () => resolve(server));
-  });
+  return app;
 }
 
 export function parsePort(value: string | undefined): number {

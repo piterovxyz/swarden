@@ -1,7 +1,7 @@
 :80 {
 	root * /srv
 
-	handle /sse {
+	handle /api/* {
 		reverse_proxy server:6701 {
 			flush_interval -1
 		}

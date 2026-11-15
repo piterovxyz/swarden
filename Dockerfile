@@ -16,10 +16,13 @@ EXPOSE 80
 
 FROM node:26-slim AS server
 WORKDIR /app
+COPY package.json package-lock.json ./
 COPY shared ./shared
-COPY server/package.json server/index.ts ./server/
+COPY server/package.json ./server/
+COPY web/package.json ./web/
+RUN npm ci --omit=dev
+COPY server/index.ts ./server/
 COPY server/src ./server/src
-RUN mkdir -p node_modules/@swarden && ln -s /app/shared node_modules/@swarden/shared
 WORKDIR /app/server
 ENV PORT=6701
 EXPOSE 6701

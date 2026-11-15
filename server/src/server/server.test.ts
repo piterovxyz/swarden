@@ -1,8 +1,8 @@
 import assert from 'node:assert/strict';
-import type { Server } from 'node:http';
 import { type AddressInfo, createServer as createTcpServer, Server as NetServer } from 'node:net';
 import { afterEach, beforeEach, describe, mock, test } from 'node:test';
 import { setTimeout as sleep } from 'node:timers/promises';
+import type { FastifyInstance } from 'fastify';
 import { parsePort, startServer } from './server.ts';
 import { connectedClients } from './sse.ts';
 
@@ -13,17 +13,17 @@ interface Client {
 
 const DEFAULT_PORT = 6701;
 
-const servers: Server[] = [];
+const apps: FastifyInstance[] = [];
 
-async function listen(port?: number): Promise<Server> {
-  const server = await startServer(port);
-  servers.push(server);
-  return server;
+async function listen(port?: number): Promise<FastifyInstance> {
+  const app = await startServer(port);
+  apps.push(app);
+  return app;
 }
 
-const portOf = (server: Server) => (server.address() as AddressInfo).port;
+const portOf = (app: FastifyInstance) => (app.server.address() as AddressInfo).port;
 
-const urlOf = (server: Server, path = '/') => `http://127.0.0.1:${portOf(server)}${path}`;
+const urlOf = (app: FastifyInstance, path = '/') => `http://127.0.0.1:${portOf(app)}${path}`;
 
 function getFreePort(): Promise<number> {
   return new Promise((resolve, reject) => {
@@ -46,22 +46,15 @@ async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
   }
 }
 
-async function subscribe(server: Server, path = '/'): Promise<Client> {
+async function subscribe(app: FastifyInstance, path = '/api/sse'): Promise<Client> {
   const controller = new AbortController();
-  const response = await fetch(urlOf(server, path), { signal: controller.signal });
+  const response = await fetch(urlOf(app, path), { signal: controller.signal });
   return { response, abort: () => controller.abort() };
 }
 
-function closeServer(server: Server): Promise<void> {
-  server.closeAllConnections();
-  return new Promise((resolve) => {
-    server.close(() => resolve());
-  });
-}
-
 afterEach(async () => {
-  for (const server of servers.splice(0)) {
-    await closeServer(server);
+  for (const app of apps.splice(0)) {
+    await app.close();
   }
   await waitUntil(() => connectedClients() === 0);
 });
@@ -83,8 +76,8 @@ describe('startServer', () => {
   });
 
   test('sends SSE headers and status 200 on GET /api/sse', async () => {
-    const server = await listen(0);
-    const { response } = await subscribe(server, '/api/sse');
+    const app = await listen(0);
+    const { response } = await subscribe(app, '/api/sse');
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'text/event-stream');
@@ -94,16 +87,25 @@ describe('startServer', () => {
   });
 
   test('handles GET /api/sse with query parameters as an SSE stream', async () => {
-    const server = await listen(0);
-    const { response } = await subscribe(server, '/api/sse?token=1');
+    const app = await listen(0);
+    const { response } = await subscribe(app, '/api/sse?token=1');
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'text/event-stream');
   });
 
+  test('responds 404 to the old /sse path', async () => {
+    const app = await listen(0);
+    const response = await fetch(urlOf(app, '/sse'));
+
+    assert.equal(response.status, 404);
+    assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
+    assert.equal(await response.text(), 'not found');
+  });
+
   test('responds 404 to unknown paths', async () => {
-    const server = await listen(0);
-    const response = await fetch(urlOf(server, '/metrics'));
+    const app = await listen(0);
+    const response = await fetch(urlOf(app, '/metrics'));
 
     assert.equal(response.status, 404);
     assert.equal(response.headers.get('content-type'), 'text/plain; charset=utf-8');
@@ -127,17 +129,17 @@ describe('startServer', () => {
     test(`does not crash on invalid PORT=${JSON.stringify(value)} and falls back to the default port`, async () => {
       process.env.PORT = value;
       const listenPorts: number[] = [];
+      const originalListen = NetServer.prototype.listen;
       mock.method(
         NetServer.prototype,
         'listen',
-        function (this: NetServer, port: number, callback: () => void) {
-          listenPorts.push(port);
-          callback();
-          return this;
+        function (this: NetServer, options: { port: number; host: string }, ...rest: unknown[]) {
+          listenPorts.push(options.port);
+          return Reflect.apply(originalListen, this, [{ ...options, port: 0 }, ...rest]);
         },
       );
 
-      await assert.doesNotReject(startServer());
+      await assert.doesNotReject(listen());
       assert.deepEqual(listenPorts, [DEFAULT_PORT]);
     });
   }
