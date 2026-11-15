@@ -11,11 +11,11 @@ curl -LO https://github.com/piterovxyz/swarden/releases/latest/download/compose.
 docker compose -f compose.yml up -d
 ```
 
-the server listens on `:6701` by default. to change the port, set `PORT` and the host mapping in `compose.yml`.
+the app is served on `:8080`: the frontend, and /api/sse is proxied to the server internally. to change the port, edit the ports mapping of the web service in compose.yml.
 
 ## api
 
-`GET /sse` returns a sse with a new message every 500 ms:
+`GET /api/sse` returns a sse with a new message every 500 ms:
 
 ```
 data: {"cpu":{"usage_percent":12.5},"mem":{"total":16384000,"available":8192000}}

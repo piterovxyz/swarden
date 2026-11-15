@@ -8,7 +8,7 @@ export function App() {
   const [connected, setConnected] = useState(false);
 
   useEffect(() => {
-    const source = new EventSource('/sse');
+    const source = new EventSource('/api/sse');
     source.onopen = () => setConnected(true);
     source.onerror = () => setConnected(false);
     source.onmessage = (event) => setMetrics(JSON.parse(event.data));

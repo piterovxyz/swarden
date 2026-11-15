@@ -9,7 +9,7 @@ export function startServer(port?: number): Promise<Server> {
   const server = createServer((req, res) => {
     const url = new URL(req.url ?? '/', 'http://localhost');
 
-    if (req.method === 'GET' && url.pathname === '/sse') {
+    if (req.method === 'GET' && url.pathname === '/api/sse') {
       handleSse(res);
       return;
     }
