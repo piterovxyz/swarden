@@ -82,9 +82,9 @@ describe('startServer', () => {
     }
   });
 
-  test('sends SSE headers and status 200 on GET /sse', async () => {
+  test('sends SSE headers and status 200 on GET /api/sse', async () => {
     const server = await listen(0);
-    const { response } = await subscribe(server, '/sse');
+    const { response } = await subscribe(server, '/api/sse');
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'text/event-stream');
@@ -93,9 +93,9 @@ describe('startServer', () => {
     assert.equal(response.headers.get('content-length'), null);
   });
 
-  test('handles GET /sse with query parameters as an SSE stream', async () => {
+  test('handles GET /api/sse with query parameters as an SSE stream', async () => {
     const server = await listen(0);
-    const { response } = await subscribe(server, '/sse?token=1');
+    const { response } = await subscribe(server, '/api/sse?token=1');
 
     assert.equal(response.status, 200);
     assert.equal(response.headers.get('content-type'), 'text/event-stream');

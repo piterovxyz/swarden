@@ -33,7 +33,7 @@ async function listen(port?: number): Promise<Server> {
 
 const portOf = (server: Server) => (server.address() as AddressInfo).port;
 
-const urlOf = (server: Server, path = '/sse') => `http://127.0.0.1:${portOf(server)}${path}`;
+const urlOf = (server: Server, path = '/api/sse') => `http://127.0.0.1:${portOf(server)}${path}`;
 
 async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
   const deadline = Date.now() + timeoutMs;
@@ -45,7 +45,7 @@ async function waitUntil(condition: () => boolean, timeoutMs = 2000) {
   }
 }
 
-async function subscribe(server: Server, path = '/sse'): Promise<Client> {
+async function subscribe(server: Server, path = '/api/sse'): Promise<Client> {
   const controller = new AbortController();
   const response = await fetch(urlOf(server, path), { signal: controller.signal });
   return { response, abort: () => controller.abort() };
