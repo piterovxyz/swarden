@@ -1,8 +1,8 @@
 import { setInterval as every } from 'node:timers/promises';
 import type { FastifyInstance } from 'fastify';
+import { parsePort, startServer } from './src/api/server.ts';
+import { broadcast } from './src/api/sse.ts';
 import { Collector } from './src/metrics/collector.ts';
-import { parsePort, startServer } from './src/server/server.ts';
-import { broadcast } from './src/server/sse.ts';
 
 if (process.platform !== 'linux') {
   console.error('this daemon can only be run on linux');
