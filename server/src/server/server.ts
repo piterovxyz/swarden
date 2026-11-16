@@ -1,9 +1,11 @@
+import fastifyStatic from '@fastify/static';
 import Fastify, { type FastifyInstance } from 'fastify';
 import { handleSse } from './sse.ts';
 
-const DEFAULT_PORT = 6701;
+const DEFAULT_PORT = 8888;
+const API_PATH = /^\/api(?:[/?]|$)/;
 
-export async function startServer(port?: number): Promise<FastifyInstance> {
+export async function startServer(port?: number, webDir?: string): Promise<FastifyInstance> {
   const listenPort = port ?? parsePort(process.env.PORT);
 
   const app = Fastify({ requestTimeout: 0, forceCloseConnections: true });
@@ -18,7 +20,14 @@ export async function startServer(port?: number): Promise<FastifyInstance> {
     { prefix: '/api' },
   );
 
-  app.setNotFoundHandler((_request, reply) => {
+  if (webDir) {
+    await app.register(fastifyStatic, { root: webDir });
+  }
+
+  app.setNotFoundHandler((request, reply) => {
+    if (webDir && request.method === 'GET' && !API_PATH.test(request.url)) {
+      return reply.sendFile('index.html');
+    }
     reply.code(404).type('text/plain; charset=utf-8').send('not found');
   });
 

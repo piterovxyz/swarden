@@ -11,7 +11,20 @@ curl -LO https://github.com/piterovxyz/swarden/releases/latest/download/compose.
 docker compose -f compose.yml up -d
 ```
 
-the app is served on `:8080`: the frontend, and /api/sse is proxied to the server internally. to change the port, edit the ports mapping of the web service in compose.yml.
+one container serves both the dashboard and the api on `http://127.0.0.1:8080`. the defaults work without any `.env` file.
+
+## configuration
+
+compose reads variables from a `.env` file next to `compose.yml`. copy the example and edit it:
+
+```bash
+cp .env.example .env
+```
+
+| variable   | default     | description                                  |
+| ---------- | ----------- | -------------------------------------------- |
+| `HOST`     | `127.0.0.1` | address on the host the port is published on |
+| `WEB_PORT` | `8080`      | host port of the dashboard and the api       |
 
 ## api
 
@@ -33,11 +46,13 @@ npm run start:server
 npm run start:web
 ```
 
-`npm run dev:server` restarts the server on file changes, `npm run dev:web` starts the vite dev server.
+- `npm run start:server` runs the api only. the dashboard is served by the server only when `WEB_DIST` points to a built `web/dist`, which the image sets, so outside docker you get the api and no dashboard.
+- `npm run dev:server` restarts the server on file changes. it listens on `PORT` (default `6701`).
+- `npm run dev:web` starts the vite dev server on `5173`. it proxies `/api` to `127.0.0.1:6701`, so run the server with the default port.
 
-## building the images
+## building the image
 
-build both images (`server` and `web`) and start them with:
+build the image and start it with:
 
 ```bash
 docker compose up --build

@@ -12,7 +12,7 @@ if (process.platform !== 'linux') {
 let app: FastifyInstance;
 try {
   const port = parsePort(process.env.PORT);
-  app = await startServer(port);
+  app = await startServer(port, process.env.WEB_DIST);
   console.log(`Server started on port ${port}`);
 
   const shutdown = () => {

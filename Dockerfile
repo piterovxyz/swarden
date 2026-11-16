@@ -9,12 +9,7 @@ COPY shared ./shared
 COPY web ./web
 RUN npm run build -w web
 
-FROM caddy:2-alpine AS web
-COPY docker/Caddyfile /etc/caddy/Caddyfile
-COPY --from=web-build /app/web/dist /srv
-EXPOSE 80
-
-FROM node:26-slim AS server
+FROM node:26-slim
 WORKDIR /app
 COPY package.json package-lock.json ./
 COPY shared ./shared
@@ -23,8 +18,10 @@ COPY web/package.json ./web/
 RUN npm ci --omit=dev
 COPY server/index.ts ./server/
 COPY server/src ./server/src
+COPY --from=web-build /app/web/dist ./web/dist
 WORKDIR /app/server
-ENV PORT=6701
-EXPOSE 6701
+ENV PORT=8888
+ENV WEB_DIST=/app/web/dist
+EXPOSE 8888
 USER node
 CMD ["node", "index.ts"]
