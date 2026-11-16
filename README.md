@@ -11,7 +11,7 @@ curl -LO https://github.com/piterovxyz/swarden/releases/latest/download/compose.
 docker compose -f compose.yml up -d
 ```
 
-one container serves both the dashboard and the api on `http://127.0.0.1:8080`. the defaults work without any `.env` file.
+one container serves both the dashboard and the api on `http://127.0.0.1:8080`.
 
 ## configuration
 
