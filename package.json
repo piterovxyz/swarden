@@ -10,9 +10,6 @@
     "node": ">=26"
   },
   "scripts": {
-    "start:server": "npm start -w server",
-    "start:web": "npm run build -w web && npm run preview -w web",
-
     "dev:server": "npm run dev -w server",
     "dev:web": "npm run dev -w web",
 

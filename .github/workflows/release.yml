@@ -74,9 +74,9 @@ jobs:
       - name: prepare release files
         id: version
         run: |
-          VERSION="${GITHUB_REF_NAME#v}"
+          export VERSION="${GITHUB_REF_NAME#v}"
           mkdir -p release
-          sed -e "s|${IMAGE}:latest|${IMAGE}:${VERSION}|" -e '/^    build:/,/^      context:/d' compose.yml > release/compose.yml
+          yq 'del(.services.swarden.build) | .services.swarden.image |= sub(":latest$", ":" + env(VERSION))' compose.yml > release/compose.yml
           echo "version=${VERSION}" >> "$GITHUB_OUTPUT"
 
       - name: create release

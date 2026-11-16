@@ -3,6 +3,7 @@
 .github
 release
 **/dist
+**/*.test.ts
 .env
 .env.*
 !.env.example

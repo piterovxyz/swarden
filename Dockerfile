@@ -14,8 +14,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY shared ./shared
 COPY server/package.json ./server/
-COPY web/package.json ./web/
-RUN npm ci --omit=dev
+RUN npm ci --omit=dev -w server
 COPY server/index.ts ./server/
 COPY server/src ./server/src
 COPY --from=web-build /app/web/dist ./web/dist
