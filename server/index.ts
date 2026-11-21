@@ -30,7 +30,7 @@ const collector = new Collector();
 
 for await (const _ of every(500)) {
   try {
-    broadcast(collector.collect());
+    broadcast(await collector.collect());
   } catch (error) {
     console.error('error collecting metrics: ', error);
   }
