@@ -1,0 +1,14 @@
+version: "2"
+linters:
+  enable:
+    - bodyclose
+    - sqlclosecheck
+    - rowserrcheck
+    - errcheck
+    - contextcheck
+    - fatcontext
+    - govet
+    - staticcheck
+  settings:
+    staticcheck:
+      checks: ["all", "-ST1000"]

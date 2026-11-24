@@ -1,8 +1,0 @@
-services:
-  swarden:
-    image: ghcr.io/piterovxyz/swarden:latest
-    build:
-      context: .
-    restart: unless-stopped
-    ports:
-      - "${HOST:-127.0.0.1}:${WEB_PORT:-8080}:8888"
